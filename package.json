@@ -8,6 +8,12 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
+  {
+  "homepage": "https://kalkulatorrk.github.io/KalkulatorRK2",
+  "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
   "dependencies": {
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
