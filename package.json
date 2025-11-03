@@ -8,7 +8,6 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
-  {
   "homepage": "https://kalkulatorrk.github.io/KalkulatorRK2",
   "scripts": {
     "predeploy": "npm run build",
