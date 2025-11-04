@@ -43,7 +43,7 @@ const HomePage = () => {
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">Инструменты для специалиста РК</h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-300">
-          Точные и удобные онлайн-калькуляторы для расчёта параметров радиографического контроля согласно отраслевым стандартам.
+          Точные и удобные онлайн-калькуляторы для расчёта параметров радиографического контроля в соответствии с отраслевым стандартам.
         </p>
          <div className="mt-6 flex justify-center">
             <div className="bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-sm font-medium px-4 py-2 rounded-lg inline-flex items-center gap-2">
@@ -57,27 +57,27 @@ const HomePage = () => {
         <Card
           to="/parameters"
           icon={<Sliders size={24} />}
-          title="Параметры РК (ГОСТ)"
+          title="Параметры радиографического контроля"
           description="Расчёт фокусного расстояния, числа экспозиций и других параметров по ГОСТ Р 50.05.07-2018."
         />
         <Card
           to="/exposure"
           icon={<Timer size={24} />}
           title="Время экспозиции"
-          description="Расчёт времени экспозиции для рентген-аппаратов и радионуклидных источников по ТУ РГК 1-2024."
+          description="Расчёт времени экспозиции для рентгеновских аппаратов и радионуклидных источников по ТУ РГК 1-2024."
         />
         <Card
           to="/activity"
           icon={<Radiation size={24} />}
           title="Активность источника"
-          description="Определение необходимой активности радионуклидных источников (Se-75, Ir-192) с учётом периода полураспада."
+          description="Определение активности радионуклидных источников (Se-75, Ir-192) с учётом периода полураспада."
         />
         <Card
-          to="#"
+          to="/geometric-unsharpness"
           icon={<Info size={24} />}
-          title="Технологическая карта"
-          description="Автоматическое формирование и печать технологических карт для проведения радиографического контроля."
-          disabled
+          title="Геометрическая нерезкость"
+          description="Расчёт величины геометрической нерезкости изображения дефектов"
+          //disabled
         />
       </div>
     </div>

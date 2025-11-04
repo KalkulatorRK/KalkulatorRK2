@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Zap, Atom, Calculator, FileText, RotateCcw } from 'lucide-react';
 
-// Данные из оригинального HTML файла
+// Данные ТУ РГК 1-24
 const apparatusData: Record<string, {type: 'П'|'И'; voltage: number; current: number|null; focus: number; thickness: number}> = {
   'RayCraft GD-160':{type:'П',voltage:160,current:5,focus:0.8,thickness:18},
   'Smart 225':{type:'П',voltage:225,current:4,focus:1.5,thickness:45},
@@ -387,7 +387,7 @@ const ExposureCalculatorPage = () => {
             `Материал: ${getMaterialName(material)}\n` +
             `Тип плёнки: ${filmType}\n` +
             `Радиационная толщина: ${thickness} мм\n` +
-            `Фокусное расстояние: ${focusDistance} мм\n\n`;
+            `Фокусное расстояние F: ${focusDistance} мм\n\n`;
 
           // Определение базового времени из номограмм импульсных аппаратов
           if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
@@ -560,14 +560,14 @@ const ExposureCalculatorPage = () => {
           Калькулятор времени экспозиции
         </h1>
         <p className="mt-2 text-lg text-slate-600 dark:text-slate-300">
-          По ТУ РГК 1-2024 (пункты 4.1, 4.2 и 4.3)
+          По ТУ РГК 1-2024
         </p>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
         <div className="flex border-b border-slate-200 dark:border-slate-700">
           <TabButton active={mode==='xray'} onClick={()=>setMode('xray')} icon={Zap}>
-            Рентген-аппараты
+            Рентгеновские аппараты
           </TabButton>
           <TabButton active={mode==='isotope'} onClick={()=>setMode('isotope')} icon={Atom}>
             Радионуклидные источники
@@ -633,7 +633,7 @@ const ExposureCalculatorPage = () => {
               />
 
               <InputField 
-                label="Фокусное расстояние (мм)" 
+                label="Фокусное расстояние F (мм) - расстояние от источника до детектор/плёнки"
                 type="number" 
                 name="focusDistance" 
                 value={xrayInputs.focusDistance} 
@@ -715,7 +715,7 @@ const ExposureCalculatorPage = () => {
 
                 {isotopeInputs.activityMethod === 'current' ? (
                   <InputField 
-                    label="Текущая активность (Ки)" 
+                    label="Текущая активность (Кюри)"
                     type="number" 
                     name="currentActivity" 
                     value={isotopeInputs.currentActivity} 
@@ -726,7 +726,7 @@ const ExposureCalculatorPage = () => {
                 ) : (
                   <div className="grid md:grid-cols-2 gap-3">
                     <InputField 
-                      label="Паспортная активность (Ки)" 
+                      label="Паспортная активность (Кюри)"
                       type="number" 
                       name="passportActivity" 
                       value={isotopeInputs.passportActivity} 
@@ -756,7 +756,7 @@ const ExposureCalculatorPage = () => {
               />
 
               <InputField 
-                label="Фокусное расстояние (мм)" 
+                label="Фокусное расстояние F (мм) - расстояние от источника до детектор/плёнки"
                 type="number" 
                 name="focusDistance" 
                 value={isotopeInputs.focusDistance} 
@@ -822,7 +822,7 @@ const ExposureCalculatorPage = () => {
               {formatTime(result)}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              F - расстояние от источника излучения до детектора (плёнки)
+              F - расстояние от источника излучения до детектора/плёнки
             </p>
           </div>
 

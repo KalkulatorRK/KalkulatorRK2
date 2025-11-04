@@ -5,6 +5,7 @@ import HomePage from './pages/HomePage';
 import ParametersCalculatorPage from './pages/ParametersCalculatorPage';
 import ExposureCalculatorPage from './pages/ExposureCalculatorPage';
 import ActivityCalculatorPage from './pages/ActivityCalculatorPage';
+import GeometricUnsharpnessCalculatorPage from './pages/GeometricUnsharpnessCalculatorPage';
 import AboutPage from './pages/AboutPage';
 
 const Header = () => {
@@ -35,6 +36,7 @@ const Header = () => {
           <NavLink to="/parameters" className={getLinkClass('/parameters')}>Параметры РК</NavLink>
           <NavLink to="/exposure" className={getLinkClass('/exposure')}>Время экспозиции</NavLink>
           <NavLink to="/activity" className={getLinkClass('/activity')}>Активность источника</NavLink>
+          <NavLink to="/geometric-unsharpness" className={getLinkClass('/geometric-unsharpness')}>Геометрическая нерезкость</NavLink>
           <NavLink to="/about" className={getLinkClass('/about')}>О проекте</NavLink>
         </nav>
       </div>
@@ -73,6 +75,7 @@ const App = () => {
             <Route path="/parameters" element={<ParametersCalculatorPage />} />
             <Route path="/exposure" element={<ExposureCalculatorPage />} />
             <Route path="/activity" element={<ActivityCalculatorPage />} />
+            <Route path="/geometric-unsharpness" element={<GeometricUnsharpnessCalculatorPage />} />
             <Route path="/about" element={<AboutPage />} />
           </Routes>
         </main>

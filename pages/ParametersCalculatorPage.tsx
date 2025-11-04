@@ -161,7 +161,7 @@ const ParametersCalculatorPage = () => {
         if (scheme !== '5e' && scheme !== '5z') {
            lines.push('  C = (2 * Φ) / K, (где C ≥ 4)');
         }
-        lines.push('  f - расстояние от источника до поверхности объекта, мм');
+        lines.push('  f - расстояние от источника до поверхности сварного шва, мм');
         lines.push('  N - число экспозиций');
         lines.push('  L - длина контролируемого за одну экспозицию участка, мм');
         lines.push('');
@@ -458,7 +458,7 @@ const ParametersCalculatorPage = () => {
             </div>
 
             <div className="text-center mb-8 no-print">
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Калькулятор параметров РК</h1>
+                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white">Калькулятор параметров радиографического контроля</h1>
                 <p className="mt-2 text-lg text-slate-600 dark:text-slate-300">По ГОСТ Р 50.05.07-2018 (Приложение Г)</p>
             </div>
 
