@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Calculator, Timer, Sliders, Info, Construction, Radiation, AlertTriangle } from 'lucide-react';
+import { Calculator, Timer, Sliders, Info, Construction, Radiation, AlertTriangle, Focus } from 'lucide-react';
 
 interface CardProps {
   to: string;
@@ -74,7 +74,7 @@ const HomePage = () => {
         />
         <Card
           to="/geometric-unsharpness"
-          icon={<Info size={24} />}
+          icon={<Focus size={24} />}
           title="Геометрическая нерезкость"
           description="Расчёт величины геометрической нерезкости изображения дефектов"
           //disabled
