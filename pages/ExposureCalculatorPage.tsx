@@ -3,17 +3,7 @@ import { Zap, Atom, Calculator, FileText, RotateCcw } from 'lucide-react';
 
 // Данные ТУ РГК 1-24
 const apparatusData: Record<string, {type: 'П'|'И'; voltage: number; current: number|null; focus: number; thickness: number}> = {
-  'RayCraft GD-160':{type:'П',voltage:160,current:5,focus:0.8,thickness:18},
-  'Smart 225':{type:'П',voltage:225,current:4,focus:1.5,thickness:45},
-  'Eresco 32 MF4-C':{type:'П',voltage:200,current:3,focus:0.4,thickness:32},
-  'Isovolt 225 M2':{type:'П',voltage:225,current:3,focus:0.4,thickness:30},
-  'РПД-150':{type:'П',voltage:150,current:3,focus:0.8,thickness:20},
-  'РПД-250':{type:'П',voltage:250,current:5,focus:3.0,thickness:60},
-  'РПД-250-П':{type:'П',voltage:250,current:5,focus:3.0,thickness:50},
-  'MAPT-200':{type:'П',voltage:200,current:2,focus:2.2,thickness:40},
-  'Памир-200':{type:'И',voltage:200,current:null,focus:3.0,thickness:40},
-  'Арина-7':{type:'И',voltage:250,current:null,focus:2.5,thickness:40},
-  'Арион-300':{type:'И',voltage:300,current:null,focus:2.3,thickness:60},
+  'МСТ-200':{type:'П',voltage:200,current:5,focus:0.4,thickness:40},
   'Арина-9':{type:'И',voltage:300,current:null,focus:2.5,thickness:50}
 };
 
@@ -23,7 +13,7 @@ const halfLifeData: Record<string, number> = {
   'Se-75':120
 };
 
-// Номограммы для постоянных аппаратов (сталь, F=1000мм, плёнка D7)
+// Номограммы для МСТ-200 (сталь, F=700мм, плёнка D7)
 const nomogramsSteelConstant: Record<string, number[]> = {
   '100':[2,3.0,2.5,4.0,3,5.0,4,8.5,4.5,11.0,5,13.0,5.5,20.0,6,24.0,7,41.0,7.5,55.0,8,73.0,8.5,100.0],
   '120':[2,1.4,3,2.25,4,3.25,5,4.8,6,7.0,6.5,8.5,7,10.2,8,13.5,8.5,18.0,9,21.0,9.5,26.0,10,31.5,11,44.0,11.5,53.0,12,62.5,13,91.0],
@@ -36,16 +26,8 @@ const nomogramsSteelConstant: Record<string, number[]> = {
   '260':[21,1.25,23,1.5,24,1.75,24,1.75,25,2.1,26,2.25,27,2.45,29,3.2,30,3.4,31,3.9,32,4.55,33,4.8,34,5.3,35,6.0,36,6.6,37,7.4,38,8.25,39,9.25]
 };
 
-// Номограммы для алюминия (постоянные аппараты)
-const nomogramsAluminumConstant: Record<string, number[]> = {
-  '50':[2,10.6,3,17.0,4,30.0,5,47.0,6,77.0,6.5,100.0],
-  '70':[2,2.4,3,3.2,4,3.8,5,4.6,6,5.7,7,7.2,8,8.8,9,10.3,10,12.0,11,14.8,12,20.0,13,22.3,14,29.0,15,33.0,16,41.0,17,50.8,18,61.0,19,73.0,20,90.7],
-  '90':[5,1.6,6,1.9,7,2.2,8,2.5,9,3.1,10,3.4,11,4.0,12,4.4,13,5.2,14,5.8,15,6.7,16,7.5,17,8.75,18,10.1,19,10.75,20,11.8,21,13.3,22,15.8,23,20.0,24,21.2,25,23.8,26,29.0,27,31.9,28,37.0,29,41.8,30,50.0,31,54.0,32,62.5,33,71.0,34,81.0,35,94.0],
-  '110':[5,1.0,7,1.25,9,1.5,10,1.75,11,2.0,12,2.2,13,2.4,14,2.6,15,3.0,16,3.25,17,3.5,18,4.0,19,4.3,20,4.75,21,5.25,22,5.75,23,6.3,24,7.1,25,7.75,26,8.5,27,9.4,28,10.3,29,10.8,30,11.5,31,12.5,32,13.8,33,15.7,34,18.4,35,20.5,36,21.6,37,23.5,38,27.0,39,30.5,40,32.0],
-  '130':[10,1.0,13,1.3,15,1.5,16,1.75,17,1.9,19,2.25,20,2.8,22,3.0,23,3.5,24,3.4,25,3.8,26,4.2,27,4.5,28,5.0,31,6.4,32,7.1,33,7.5,34,8.25,35,9.1,36,10.0,37,10.5,38,10.9,39,11.7,40,12.4]
-};
 
-// Номограммы для импульсных аппаратов (сталь, F=300мм)
+// Номограммы для Арина-9 (сталь, F=700мм, плёнки: D7 + Pb 0,027 мм, F8+RCF, F8+NDT1200)
 const nomogramsSteelPulse: Record<string, number[]> = {
   'D7':[3,1.07,4,1.18,5,1.35,6,1.7,7,2.3,8,2.6,9,2.95,10,3.5,11,4.2,12,4.8,13,5.7,14,6.6,15,7.7,16,9.0,17,11.0,18,14.0,19,16.0],
   'F8+RCF':[3,0.28,4,0.34,5,0.38,6,0.45,7,0.53,8,0.62,9,0.73,10,0.85,11,1.0,12,1.07,13,1.17,14,1.34,15,1.7,16,2.2,17,2.6,18,2.95,19,3.5,20,4.1,21,4.8,22,5.7,23,6.5,24,7.7,25,9.0,26,11.0,27,14.0,28,16.0],
@@ -173,10 +155,10 @@ function calculateExposureFactor(h: number, F: number): { value: number; calcula
   // Интерполяция по F
   const h1F = (FI1 === FI2) ? T11 : T11 + (T12 - T11) * (F - FValues[FI1]) / (FValues[FI2] - FValues[FI1]);
   const h2F = (FI1 === FI2) ? T21 : T21 + (T22 - T21) * (F - FValues[FI1]) / (FValues[FI2] - FValues[FI1]);
-  
+
   // Интерполяция по h
   const finalValue = (hI1 === hI2) ? h1F : h1F + (h2F - h1F) * (h - hValues[hI1]) / (hValues[hI2] - hValues[hI1]);
-  
+
   const calculation = `Интерполяция по радиационной толщине h: ${hCalc}\n` +
     `Интерполяция по фокусному расстоянию F: ${FCalc}\n` +
     `Для h=${hValues[hI1]} мм: T=${T11} + (${T12} - ${T11}) × (${F} - ${FValues[FI1]}) / (${FValues[FI2]} - ${FValues[FI1]}) = ${h1F.toFixed(2)}\n` +
@@ -202,8 +184,8 @@ function getMaterialCoefficient(material: string): number {
  * Название материала на русском
  */
 const getMaterialName = (material: string) => ({
-  steel: 'сталь', 
-  aluminum: 'алюминий', 
+  steel: 'сталь',
+  aluminum: 'алюминий',
   titanium: 'титан'
 }[material] || material);
 
@@ -217,11 +199,11 @@ interface TabButtonProps {
 }
 
 const TabButton: React.FC<TabButtonProps> = ({ active, onClick, children, icon: Icon }) => (
-  <button 
-    onClick={onClick} 
+  <button
+    onClick={onClick}
     className={`flex-1 p-4 rounded-t-lg font-bold text-sm md:text-base flex items-center justify-center gap-2 transition-all duration-300 ${
-      active 
-        ? 'bg-white dark:bg-slate-800 border-b-2 border-blue-600 text-blue-600' 
+      active
+        ? 'bg-white dark:bg-slate-800 border-b-2 border-blue-600 text-blue-600'
         : 'bg-slate-100 dark:bg-slate-900 text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-700'
     }`}
   >
@@ -230,43 +212,43 @@ const TabButton: React.FC<TabButtonProps> = ({ active, onClick, children, icon: 
   </button>
 );
 
-interface InputFieldProps { 
-  label: string; 
-  name: string; 
-  value: string | number; 
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; 
-  type?: string; 
-  step?: string; 
-  min?: string; 
-  disabled?: boolean; 
+interface InputFieldProps {
+  label: string;
+  name: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  step?: string;
+  min?: string;
+  disabled?: boolean;
 }
 
 const InputField: React.FC<InputFieldProps> = ({ label, name, ...props }) => (
   <div className="flex flex-col">
     <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{label}</label>
-    <input 
-      name={name} 
-      {...props} 
-      className="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed" 
+    <input
+      name={name}
+      {...props}
+      className="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
     />
   </div>
 );
 
-interface SelectFieldProps { 
-  label: string; 
-  name: string; 
-  value: string | number; 
-  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void; 
-  children: React.ReactNode; 
+interface SelectFieldProps {
+  label: string;
+  name: string;
+  value: string | number;
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  children: React.ReactNode;
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({ label, name, ...props }) => (
   <div className="flex flex-col">
     <label className="text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">{label}</label>
-    <select 
-      name={name} 
-      {...props} 
-      className="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md" 
+    <select
+      name={name}
+      {...props}
+      className="w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md"
     />
   </div>
 );
@@ -277,27 +259,27 @@ const ExposureCalculatorPage = () => {
   const [mode, setMode] = useState<'xray' | 'isotope'>('xray');
   const [result, setResult] = useState<number | null>(null);
   const [log, setLog] = useState<string | null>(null);
-  
+
   const [xrayInputs, setXrayInputs] = useState({
-    apparatusType: '', 
-    operationMode: 'constant' as 'constant' | 'pulse', 
-    voltage: '', 
-    current: '', 
-    radThickness: '', 
-    focusDistance: '', 
-    material: 'steel' as 'steel' | 'aluminum' | 'titanium', 
+    apparatusType: '',
+    operationMode: 'constant' as 'constant' | 'pulse',
+    voltage: '',
+    current: '',
+    radThickness: '',
+    focusDistance: '',
+    material: 'steel' as 'steel' | 'aluminum' | 'titanium',
     filmType: 'D7'
   });
 
   const [isotopeInputs, setIsotopeInputs] = useState({
-    sourceType: 'Ir-192' as keyof typeof halfLifeData, 
-    activityMethod: 'current' as 'current' | 'passport', 
-    currentActivity: '10', 
-    passportActivity: '10', 
-    passportDate: new Date().toISOString().split('T')[0], 
-    radThickness: '20', 
-    focusDistance: '500', 
-    material: 'steel' as 'steel' | 'aluminum' | 'titanium', 
+    sourceType: 'Ir-192' as keyof typeof halfLifeData,
+    activityMethod: 'current' as 'current' | 'passport',
+    currentActivity: '10',
+    passportActivity: '10',
+    passportDate: new Date().toISOString().split('T')[0],
+    radThickness: '20',
+    focusDistance: '500',
+    material: 'steel' as 'steel' | 'aluminum' | 'titanium',
     filmType: 'D7'
   });
 
@@ -314,38 +296,28 @@ const ExposureCalculatorPage = () => {
   // Обработчик изменений для рентгеновских аппаратов
   const handleXrayChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const {name, value} = e.target;
-    
+
     setXrayInputs(prev => {
       let newInputs = {...prev, [name]: value};
-      
+
       if (name === 'apparatusType') {
         const data = apparatusData[value];
         if (data) {
           newInputs.operationMode = data.type === 'П' ? 'constant' : 'pulse';
           newInputs.voltage = String(data.voltage);
           newInputs.current = data.current ? String(data.current) : '';
-          newInputs.focusDistance = String(newInputs.operationMode === 'constant' ? 1000 : 300);
+          // Для обоих аппаратов устанавливаем фокусное расстояние 700мм
+          newInputs.focusDistance = '700';
           // Для импульсных аппаратов устанавливаем материал "сталь"
           if (newInputs.operationMode === 'pulse') {
             newInputs.material = 'steel';
           }
         }
-      } else if (name === 'operationMode') {
-        newInputs.focusDistance = String(value === 'constant' ? 1000 : 300);
-        if (value === 'pulse') {
-          newInputs.current = '';
-          newInputs.material = 'steel'; // Для импульсных аппаратов только сталь
-        }
-        // Обеспечиваем валидный тип плёнки после смены режима
-        const currentValidOptions = value === 'pulse' ? Object.keys(filmFactors['Ir-192']) : Object.keys(filmFactors.constant);
-        if (!currentValidOptions.includes(newInputs.filmType)) {
-          newInputs.filmType = 'D7';
-        }
       }
       return newInputs;
     });
   }
-  
+
   // Обработчик изменений для радионуклидных источников
   const handleIsotopeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -370,7 +342,7 @@ const ExposureCalculatorPage = () => {
           throw new Error('Пожалуйста, заполните все обязательные поля');
         }
         if (operationMode === 'constant' && !current) {
-          throw new Error('Для постоянного режима необходимо указать ток');
+          throw new Error('Необходимо указать величину анодного тока (мА)');
         }
         if (operationMode === 'pulse' && material !== 'steel') {
           throw new Error('Для импульсных аппаратов расчет возможен только для стали');
@@ -382,23 +354,23 @@ const ExposureCalculatorPage = () => {
         let titaniumCoefficient = 1.0;
 
         if (operationMode === 'pulse') {
-          // РАСЧЕТ ДЛЯ ИМПУЛЬСНЫХ АППАРАТОВ (ТОЛЬКО СТАЛЬ)
-          calculationLog = `РАСЧЕТ ДЛЯ ИМПУЛЬСНЫХ АППАРАТОВ\n` +
+          // РАСЧЕТ ДЛЯ АРИНА-9 (ТОЛЬКО СТАЛЬ)
+          calculationLog = `РАСЧЕТ ДЛЯ АРИНА-9\n` +
             `Материал: ${getMaterialName(material)}\n` +
             `Тип плёнки: ${filmType}\n` +
             `Радиационная толщина: ${thickness} мм\n` +
             `Фокусное расстояние F: ${focusDistance} мм\n\n`;
 
-          // Определение базового времени из номограмм импульсных аппаратов
+          // Определение базового времени из номограмм Арина-9 (F0=700мм)
           if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
             baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulse, filmType, thickness);
             filmFactor = 1.0; // Фактор уже учтен в номограмме
-            calculationLog += `1. Базовое время из номограммы для ${filmType}: t₀ = ${baseExposure.toFixed(3)} мин\n`;
+            calculationLog += `1. Базовое время из номограммы Арина-9 (F₀=700 мм) для ${filmType}: t₀ = ${baseExposure.toFixed(3)} мин\n`;
           } else {
             // Для других типов плёнок используем номограмму D7 и применяем фактор
             baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulse, 'D7', thickness);
             filmFactor = filmFactors['pulse'][filmType] || 1.0;
-            calculationLog += `1. Базовое время из номограммы для D7: t₀ = ${baseExposure.toFixed(3)} мин\n` +
+            calculationLog += `1. Базовое время из номограммы Арина-9 (F₀=700 мм) для D7: t₀ = ${baseExposure.toFixed(3)} мин\n` +
               `2. Корректировка для плёнки ${filmType}: ω₁ = ${filmFactor}\n` +
               `t₁ = t₀ × ω₁ = ${baseExposure.toFixed(3)} × ${filmFactor} = ${(baseExposure * filmFactor).toFixed(3)} мин\n`;
           }
@@ -406,8 +378,8 @@ const ExposureCalculatorPage = () => {
           adjustedExposure = baseExposure * filmFactor;
 
         } else {
-          // РАСЧЕТ ДЛЯ ПОСТОЯННЫХ АППАРАТОВ
-          calculationLog = `РАСЧЕТ ДЛЯ ПОСТОЯННЫХ АППАРАТОВ\n` +
+          // РАСЧЕТ ДЛЯ ПОСТОЯННЫХ АППАРАТОВ (МСТ-200)
+          calculationLog = `РАСЧЕТ ДЛЯ МСТ-200\n` +
             `Напряжение: ${voltage} кВ\n` +
             `Ток: ${current} мА\n` +
             `Материал: ${getMaterialName(material)}\n` +
@@ -415,43 +387,33 @@ const ExposureCalculatorPage = () => {
             `Радиационная толщина: ${thickness} мм\n` +
             `Фокусное расстояние: ${focusDistance} мм\n\n`;
 
-          // Определение базового времени из номограмм
-          const nomogram = material === 'steel' || material === 'titanium' ? nomogramsSteelConstant : nomogramsAluminumConstant;
-          baseExposure = interpolateFromNomogram(nomogram, voltage, thickness);
-          
-          // Корректировка для титана
-          if (material === 'titanium') {
-            titaniumCoefficient = 0.7;
-            calculationLog += `1. Базовое время из номограммы для стали: t₀ = ${baseExposure.toFixed(3)} мА·мин\n` +
-              `2. Корректировка для титана: K_Ti = 0.7\n` +
-              `t₀_Ti = t₀ × K_Ti = ${baseExposure.toFixed(3)} × 0.7 = ${(baseExposure * titaniumCoefficient).toFixed(3)} мА·мин\n`;
-          } else {
-            calculationLog += `1. Базовое время из номограммы: t₀ = ${baseExposure.toFixed(3)} мА·мин\n`;
-          }
+          // Определение базового времени из номограмм для МСТ-200 (F0=700мм)
+          baseExposure = interpolateFromNomogram(nomogramsSteelConstant, voltage, thickness);
+          calculationLog += `1. Базовое время из номограммы МСТ-200 (F₀=700 мм): t₀ = ${baseExposure.toFixed(3)} мА·мин\n`;
 
           // Корректировка для типа плёнки
           filmFactor = filmFactors['constant'][filmType] || 1.0;
-          adjustedExposure = baseExposure * titaniumCoefficient * filmFactor;
-          
-          calculationLog += `${material === 'titanium' ? '3' : '2'}. Корректировка для плёнки ${filmType}: ω₁ = ${filmFactor}\n` +
-            `t₁ = ${(baseExposure * titaniumCoefficient).toFixed(3)} × ${filmFactor} = ${adjustedExposure.toFixed(3)} мА·мин\n`;
+          adjustedExposure = baseExposure * filmFactor;
+
+          calculationLog += `2. Корректировка для плёнки ${filmType}: ω₁ = ${filmFactor}\n` +
+            `t₁ = ${baseExposure.toFixed(3)} × ${filmFactor} = ${adjustedExposure.toFixed(3)} мА·мин\n`;
         }
 
         // Корректировка для фокусного расстояния
-        const baseFocus = operationMode === 'constant' ? 1000 : 300;
+        const baseFocus = 700; // Для обоих аппаратов базовое расстояние 700мм
         const focusCorrection = Math.pow(focusDistance / baseFocus, 2);
         const finalExposureMin = adjustedExposure * focusCorrection;
 
-        calculationLog += `${operationMode === 'pulse' ? '2' : '4'}. Корректировка для фокусного расстояния:\n` +
-          `Базовое расстояние F_u = ${baseFocus} мм\n` +
+        calculationLog += `${operationMode === 'pulse' ? '2' : '3'}. Корректировка для фокусного расстояния:\n` +
+          `Базовое расстояние F₀ = ${baseFocus} мм\n` +
           `Фактическое расстояние F = ${focusDistance} мм\n` +
-          `(F/F_u)² = (${focusDistance}/${baseFocus})² = ${focusCorrection.toFixed(3)}\n` +
+          `(F/F₀)² = (${focusDistance}/${baseFocus})² = ${focusCorrection.toFixed(3)}\n` +
           `t = ${adjustedExposure.toFixed(3)} × ${focusCorrection.toFixed(3)} = ${finalExposureMin.toFixed(3)} ${operationMode === 'constant' ? 'мА·мин' : 'мин'}\n\n`;
 
         // Перевод в секунды
         if (operationMode === 'constant') {
           finalTime = (finalExposureMin / current) * 60;
-          calculationLog += `5. Перевод в секунды:\n` +
+          calculationLog += `4. Перевод в секунды:\n` +
             `t_сек = (t / I) × 60 = (${finalExposureMin.toFixed(3)} / ${current}) × 60 = ${finalTime.toFixed(0)} сек`;
         } else {
           finalTime = finalExposureMin * 60;
@@ -494,17 +456,17 @@ const ExposureCalculatorPage = () => {
             `Период полураспада ${sourceType}: ${halfLife} дней\n` +
             `Текущая активность: A = ${passportActivity} × e^(-0.69 × ${timeElapsed} / ${halfLife}) = ${activity.toFixed(4)} Ки`;
         }
-        
+
         // Определение фактора экспозиции T
         const TFactorResult = calculateExposureFactor(thickness, focusDistance);
         const TFactor = TFactorResult.value;
-        
+
         // Определение коэффициента материала
         const materialCoeff = getMaterialCoefficient(material);
-        
+
         // Определение фактора плёнки
         const filmFactor = filmFactors[sourceType][filmType] || 1.0;
-        
+
         // Расчёт времени экспозиции
         finalTime = (TFactor * materialCoeff / activity) * 60 * filmFactor;
 
@@ -531,11 +493,11 @@ const ExposureCalculatorPage = () => {
       alert(error instanceof Error ? error.message : 'Произошла ошибка при расчете');
     }
   };
-  
+
   // Сброс результатов
-  const reset = () => { 
-    setResult(null); 
-    setLog(null); 
+  const reset = () => {
+    setResult(null);
+    setLog(null);
   };
 
   // Форматирование времени
@@ -578,10 +540,10 @@ const ExposureCalculatorPage = () => {
           {mode === 'xray' ? (
             <div className="grid md:grid-cols-2 gap-4 animate-fade-in">
               <div className="md:col-span-2">
-                <SelectField 
-                  label="Тип аппарата" 
-                  name="apparatusType" 
-                  value={xrayInputs.apparatusType} 
+                <SelectField
+                  label="Тип аппарата"
+                  name="apparatusType"
+                  value={xrayInputs.apparatusType}
                   onChange={handleXrayChange}
                 >
                   <option value="">Выберите аппарат или введите параметры</option>
@@ -591,67 +553,56 @@ const ExposureCalculatorPage = () => {
                 </SelectField>
               </div>
 
-              <SelectField 
-                label="Режим работы" 
-                name="operationMode" 
-                value={xrayInputs.operationMode} 
+              <InputField
+                label="Напряжение (кВ)"
+                type="number"
+                name="voltage"
+                value={xrayInputs.voltage}
                 onChange={handleXrayChange}
-              >
-                <option value="constant">Постоянный (П)</option>
-                <option value="pulse">Импульсный (И)</option>
-              </SelectField>
-
-              <InputField 
-                label="Напряжение (кВ)" 
-                type="number" 
-                name="voltage" 
-                value={xrayInputs.voltage} 
-                onChange={handleXrayChange} 
                 min="50"
                 step="1"
               />
 
-              <InputField 
-                label="Ток (мА)" 
-                type="number" 
-                name="current" 
-                value={xrayInputs.current} 
-                onChange={handleXrayChange} 
+              <InputField
+                label="Ток (мА)"
+                type="number"
+                name="current"
+                value={xrayInputs.current}
+                onChange={handleXrayChange}
                 disabled={xrayInputs.operationMode === 'pulse'}
                 min="1"
                 step="0.1"
               />
 
-              <InputField 
-                label="Радиационная толщина (мм)" 
-                type="number" 
-                name="radThickness" 
-                value={xrayInputs.radThickness} 
-                onChange={handleXrayChange} 
+              <InputField
+                label="Радиационная толщина (мм)"
+                type="number"
+                name="radThickness"
+                value={xrayInputs.radThickness}
+                onChange={handleXrayChange}
                 min="1"
                 step="0.1"
               />
 
-              <InputField 
+              <InputField
                 label="Фокусное расстояние F (мм) - расстояние от источника до детектор/плёнки"
-                type="number" 
-                name="focusDistance" 
-                value={xrayInputs.focusDistance} 
-                onChange={handleXrayChange} 
+                type="number"
+                name="focusDistance"
+                value={xrayInputs.focusDistance}
+                onChange={handleXrayChange}
                 min="100"
                 step="1"
               />
 
-              <SelectField 
-                label="Материал объекта" 
-                name="material" 
-                value={xrayInputs.material} 
+              <SelectField
+                label="Материал объекта"
+                name="material"
+                value={xrayInputs.material}
                 onChange={handleXrayChange}
-                disabled={xrayInputs.operationMode === 'pulse'}
               >
                 <option value="steel">Сталь</option>
-                <option value="aluminum">Алюминий/Магний</option>
-                <option value="titanium">Титан</option>
+                <option value="aluminum" disabled>Алюминий/Магний (в разработке)</option>
+                <option value="titanium" disabled>Титан (в разработке)</option>
               </SelectField>
 
               <div className="md:col-span-2">

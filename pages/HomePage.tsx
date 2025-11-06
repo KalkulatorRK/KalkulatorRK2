@@ -43,7 +43,7 @@ const HomePage = () => {
       <div className="text-center mb-12">
         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">Инструменты для специалиста РК</h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-300">
-          Точные и удобные онлайн-калькуляторы для расчёта параметров радиографического контроля в соответствии с отраслевым стандартам.
+          Онлайн-калькуляторы для расчёта параметров радиографического контроля в соответствии с отраслевым стандартами.
         </p>
          <div className="mt-6 flex justify-center">
             <div className="bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-sm font-medium px-4 py-2 rounded-lg inline-flex items-center gap-2">
