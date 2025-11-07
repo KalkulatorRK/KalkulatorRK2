@@ -570,7 +570,7 @@ const ExposureCalculatorPage = () => {
           Калькулятор времени экспозиции
         </h1>
         <p className="mt-2 text-lg text-slate-600 dark:text-slate-300">
-          По ТУ РГК 1-2024
+          По ТУ РГК 1-2024 и номограммам р/а
         </p>
       </div>
 
@@ -594,7 +594,7 @@ const ExposureCalculatorPage = () => {
                   value={xrayInputs.apparatusType}
                   onChange={handleXrayChange}
                 >
-                  <option value="">Выберите аппарат или введите параметры</option>
+                  <option value="">Выберите модель  аппарата </option>
                   {Object.keys(apparatusData).map(name => (
                     <option key={name} value={name}>{name}</option>
                   ))}
@@ -633,7 +633,7 @@ const ExposureCalculatorPage = () => {
               />
 
               <InputField
-                label="Фокусное расстояние F (мм) - расстояние от источника до детектор/плёнки"
+                label="Фокусное расстояние F (мм) - расстояние от источника до детектора/плёнки"
                 type="number"
                 name="focusDistance"
                 value={xrayInputs.focusDistance}
@@ -755,7 +755,7 @@ const ExposureCalculatorPage = () => {
               />
 
               <InputField 
-                label="Фокусное расстояние F (мм) - расстояние от источника до детектор/плёнки"
+                label="Фокусное расстояние F (мм) - расстояние от источника до детектора/плёнки"
                 type="number" 
                 name="focusDistance" 
                 value={isotopeInputs.focusDistance} 
@@ -841,9 +841,8 @@ const ExposureCalculatorPage = () => {
 
       <div className="mt-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-4">
         <p className="text-sm text-amber-800 dark:text-amber-200 text-center">
-          <strong>Внимание!</strong> Данный калькулятор является инструментом для предварительных расчётов. 
-          При проведении реальных работ обязательно руководствуйтесь полным текстом ТУ РГК 1-2024 
-          и соблюдайте все требования безопасности.
+          <strong>Внимание!</strong> Данный калькулятор является инструментом для приблизительных расчётов на основе соответвующих номограмм.
+          При проведении реальных работ выполняйте тестовые измерения в соответствии с нормами и правилами.
         </p>
       </div>
     </div>
