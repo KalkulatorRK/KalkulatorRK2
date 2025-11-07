@@ -1,0 +1,20 @@
+n[33mab0c75d[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m мусчимся
+[33m461ab67[m vite
+[33m1c59c15[m vercel upgrade
+[33ma1f83cb[m Setup for Vercel deployment
+[33m9328cf1[m устранение ошибки vite
+[33m16791d7[m исправления и тэги
+[33mcf0c2e4[m яндекс вебмастер и
+[33m4f895a4[m убраны рентген аппараты и испралена логика для них
+[33maf3c1a3[m Remove vercel.json for proper build settings
+[33md9b4bdc[m изменён vite.config и сделан build в ide
+[33m8c0f7b3[m Обновлен vite.config для vercel
+[33m488040f[m Обновлен калькулятор геометрической нерезкости: добавлена проверка по ГОСТ 7512-85, удалены функции печати
+[33m1de36e9[m add GeometricUnsharpnessCalculatorPage and update
+[33m238b048[m Merge: use local project files
+[33m7a8e70c[m Initial commit
+[33me02c8b4[m Update package.json
+[33m561c404[m Update package.json
+[33mb26d7d7[m Update index.html
+[33m59fcabc[m Update index.html
+[33mc90a22b[m Add files via upload
