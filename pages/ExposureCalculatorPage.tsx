@@ -3,8 +3,9 @@ import { Zap, Atom, Calculator, FileText, RotateCcw } from 'lucide-react';
 
 // Данные ТУ РГК 1-24
 const apparatusData: Record<string, {type: 'П'|'И'; voltage: number; current: number|null; focus: number; thickness: number}> = {
-  'МСТ-200':{type:'П',voltage:200,current:5,focus:0.4,thickness:40},
-  'Арина-9':{type:'И',voltage:300,current:null,focus:2.5,thickness:50}
+  'МСТ-200':{type:'П',voltage:160,current:5,focus:1.5,thickness:20},
+  'Арина-9':{type:'И',voltage:300,current:null,focus:2.5,thickness:50},
+  'Арина-7':{type:'И',voltage:250,current:null,focus:2.5,thickness:40}
 };
 
 const halfLifeData: Record<string, number> = {
@@ -14,24 +15,28 @@ const halfLifeData: Record<string, number> = {
 };
 
 // Номограммы для МСТ-200 (сталь, F=700мм, плёнка D7)
-const nomogramsSteelConstant: Record<string, number[]> = {
-  '100':[2,3.0,2.5,4.0,3,5.0,4,8.5,4.5,11.0,5,13.0,5.5,20.0,6,24.0,7,41.0,7.5,55.0,8,73.0,8.5,100.0],
-  '120':[2,1.4,3,2.25,4,3.25,5,4.8,6,7.0,6.5,8.5,7,10.2,8,13.5,8.5,18.0,9,21.0,9.5,26.0,10,31.5,11,44.0,11.5,53.0,12,62.5,13,91.0],
-  '140':[3,1.25,4,1.5,5,2.1,7,3.4,8,4.4,9,5.6,10,7.3,11,9.2,12,10.8,14,17.0,15,21.5,16,28.2,17,34.0,18,43.0,19,54.0,20,70.5,21,87.5],
-  '160':[7,1.7,8,2.2,9,2.7,10,3.3,11,4.2,12,5.1,13,6.2,14,7.5,15,9.3,16,10.4,17,12.5,18,16.0,19,20.7,20,24.0,21,31.0,22,38.0,23,46.0,24,57.0,25,71.0,26,87.0,26.5,100.0],
-  '180':[8,1.25,9,1.45,10,1.8,12,2.5,14,3.5,15,4.25,17,6.0,18,7.0,20,9.5,22,12.0,23,14.0,24,18.0,25,21.0,26,24.2,27,30.5,28,34.0,29,41.0,30,49.0,31,57.0,32,68.0,33,80.5,34,93.0],
-  '200':[12,1.5,13,1.8,15,2.4,16,3.0,18,4.0,19,4.5,20,5.25,21,6.1,22,7.2,23,8.2,24,9.5,25,10.6,26,11.7,27,13.3,28,16.2,29,20.2,30,21.9,31,26.0,32,30.8,33,34.5,34,41.0,35,49.0,36,56.0,37,64.5,38,75.0,39,90.0],
-  '220':[15,1.4,17,2.0,19,2.4,20,2.9,22,3.5,24,4.5,26,5.8,27,6.5,28,7.4,29,8.4,30,9.4,32,11.0,33,12.1,34,13.8,35,16.3,36,20.0,37,21.3,38,23.5,39,28.0,40,31.0],
-  '240':[18,1.45,19,1.75,20,2.0,21,2.25,22,2.4,23,2.7,24,3.2,25,3.4,26,4.0,28,5.0,30,6.1,31,6.8,32,7.5,33,8.4,34,9.5,35,10.4,36,11.0,37,12.0,38,13.35,39,15.5,40,18.3],
-  '260':[21,1.25,23,1.5,24,1.75,24,1.75,25,2.1,26,2.25,27,2.45,29,3.2,30,3.4,31,3.9,32,4.55,33,4.8,34,5.3,35,6.0,36,6.6,37,7.4,38,8.25,39,9.25]
+const nomogramsSteelConstantMST200: Record<string, number[]> = {
+  '80':[2.5,7.0,5,40.0,7.5,300.0],
+  '100':[2.5,2.0,5,5.5,7.5,15.0,10,40.0,15,350.0],
+  '120':[2.5,1.2,5,2.25,7.5,3.25,10,9.0,15,38.0,20,150.0,25,650.0],
+  '140':[5,1.25,7.5,2.0,10,3.5,15,10.0,20,30.0,25,95.0,30,290.0,35,850.0],
+  '160':[7.5,1.25,10,1.8,15,4.5,20,11.0,25,25.0,30,60.0,35,150.0,40,350.0,45,900.0],
+  '180':[10,1.0,15,2.3,20,4.8,25,10.0,30,21.0,35,45.0,40,95.0,45,200.0,50,420.0,55,900.0],
+  '200':[15,1.5,20,2.8,25,5.0,30,10.0,35,20.0,40,35.0,45,67.0,50,140.0,55,250.2,60,480.0,65,1000.0]
 };
 
+// Номограммы для Арина-7 (сталь, F=500мм, плёнки: D7 + Pb 0,027 мм, F8+RCF, F8+NDT1200)
+const nomogramsSteelPulseArina7: Record<string, number[]> = {
+  'D7':[2.5,0.95,5,1.5,10,3.0,15,6.2,20,15.0],
+  'F8+RCF':[2.5,0.24,5,0.32,10,0.7,15,1.6,20,3.2,25,6.8,30,15.0],
+  'F8+NDT1200':[5,0.08,10,0.2,15,0.42,20,0.9,25,1.9,30,4.0,35,8.2]
+};
 
 // Номограммы для Арина-9 (сталь, F=700мм, плёнки: D7 + Pb 0,027 мм, F8+RCF, F8+NDT1200)
-const nomogramsSteelPulse: Record<string, number[]> = {
-  'D7':[3,1.07,4,1.18,5,1.35,6,1.7,7,2.3,8,2.6,9,2.95,10,3.5,11,4.2,12,4.8,13,5.7,14,6.6,15,7.7,16,9.0,17,11.0,18,14.0,19,16.0],
-  'F8+RCF':[3,0.28,4,0.34,5,0.38,6,0.45,7,0.53,8,0.62,9,0.73,10,0.85,11,1.0,12,1.07,13,1.17,14,1.34,15,1.7,16,2.2,17,2.6,18,2.95,19,3.5,20,4.1,21,4.8,22,5.7,23,6.5,24,7.7,25,9.0,26,11.0,27,14.0,28,16.0],
-  'F8+NDT1200':[3,0.015,4,0.06,5,0.11,6,0.14,7,0.16,8,0.18,9,0.2,10,0.24,11,0.28,12,0.33,13,0.38,14,0.45,15,0.52,16,0.6,17,0.73,18,0.85,19,1.0,20,1.075,21,1.17,22,1.33,23,1.7,24,2.2,25,2.6,26,3.0,27,3.55,28,4.2,29,4.8,30,5.7,31,6.7,32,7.7,33,9.0,34,12.0,35,14.0]
+const nomogramsSteelPulseArina9: Record<string, number[]> = {
+  'D7':[2.5,1.5,5,2.0,10,3.8,15,7.0,20,13.0],
+  'F8+RCF':[2.5,0.36,5,0.49,10,0.9,15,1.8,20,3.0,25,5.6,30,10.0],
+  'F8+NDT1200':[5,0.15,10,0.25,15,0.48,20,0.8,25,1.6,30,2.8,35,5.0,40,9.0]
 };
 
 // Факторы плёнок из Таблицы 8
@@ -95,6 +100,13 @@ const table7Data = {
  * Линейная интерполяция в номограммах
  */
 function interpolateLinear(data: number[], thickness: number): number {
+  // Проверка точного совпадения
+  for (let i = 0; i < data.length - 1; i += 2) {
+    if (thickness === data[i]) {
+      return data[i + 1];
+    }
+  }
+
   for (let i = 0; i < data.length - 2; i += 2) {
     const t1 = data[i], e1 = data[i+1], t2 = data[i+2], e2 = data[i+3];
     if (thickness >= t1 && thickness <= t2) {
@@ -134,6 +146,18 @@ function interpolateFromPulseNomogram(nomogramData: Record<string, number[]>, fi
 function calculateExposureFactor(h: number, F: number): { value: number; calculation: string } {
   const hValues = table7Data.h;
   const FValues = table7Data.F;
+
+  // Проверка точного совпадения
+  const exactHIndex = hValues.findIndex(val => val === h);
+  const exactFIndex = FValues.findIndex(val => val === F);
+
+  if (exactHIndex !== -1 && exactFIndex !== -1) {
+    const exactValue = table7Data.values[exactHIndex][exactFIndex];
+    return {
+      value: exactValue,
+      calculation: `Точное совпадение: h=${h} мм, F=${F} мм → T=${exactValue}`
+    };
+  }
 
   // Функция для поиска индексов интерполяции
   const findIdx = (val: number, arr: number[]) => {
@@ -306,8 +330,12 @@ const ExposureCalculatorPage = () => {
           newInputs.operationMode = data.type === 'П' ? 'constant' : 'pulse';
           newInputs.voltage = String(data.voltage);
           newInputs.current = data.current ? String(data.current) : '';
-          // Для обоих аппаратов устанавливаем фокусное расстояние 700мм
-          newInputs.focusDistance = '700';
+          // Установка фокусного расстояния по умолчанию
+          if (value === 'Арина-7') {
+            newInputs.focusDistance = '500'; // Для Арина-7 базовое расстояние 500мм
+          } else {
+            newInputs.focusDistance = '700'; // Для остальных аппаратов 700мм
+          }
           // Для импульсных аппаратов устанавливаем материал "сталь"
           if (newInputs.operationMode === 'pulse') {
             newInputs.material = 'steel';
@@ -331,7 +359,7 @@ const ExposureCalculatorPage = () => {
 
     try {
       if (mode === 'xray') {
-        const { operationMode, material, filmType } = xrayInputs;
+        const { apparatusType, operationMode, material, filmType } = xrayInputs;
         const voltage = parseFloat(xrayInputs.voltage);
         const current = parseFloat(xrayInputs.current);
         const thickness = parseFloat(xrayInputs.radThickness);
@@ -351,28 +379,47 @@ const ExposureCalculatorPage = () => {
         let baseExposure: number;
         let filmFactor: number;
         let adjustedExposure: number;
-        let titaniumCoefficient = 1.0;
+        let baseFocus: number;
 
         if (operationMode === 'pulse') {
-          // РАСЧЕТ ДЛЯ АРИНА-9 (ТОЛЬКО СТАЛЬ)
-          calculationLog = `РАСЧЕТ ДЛЯ АРИНА-9\n` +
+          // РАСЧЕТ ДЛЯ ИМПУЛЬСНЫХ АППАРАТОВ
+          calculationLog = `РАСЧЕТ ДЛЯ ${apparatusType}\n` +
             `Материал: ${getMaterialName(material)}\n` +
             `Тип плёнки: ${filmType}\n` +
             `Радиационная толщина: ${thickness} мм\n` +
             `Фокусное расстояние F: ${focusDistance} мм\n\n`;
 
-          // Определение базового времени из номограмм Арина-9 (F0=700мм)
-          if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
-            baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulse, filmType, thickness);
-            filmFactor = 1.0; // Фактор уже учтен в номограмме
-            calculationLog += `1. Базовое время из номограммы Арина-9 (F₀=700 мм) для ${filmType}: t₀ = ${baseExposure.toFixed(3)} мин\n`;
+          // Определение базового времени из соответствующих номограмм
+          if (apparatusType === 'Арина-7') {
+            baseFocus = 500; // Базовое расстояние для Арина-7
+            if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
+              baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulseArina7, filmType, thickness);
+              filmFactor = 1.0; // Фактор уже учтен в номограмме
+              calculationLog += `1. Базовое время из номограммы Арина-7 (F₀=${baseFocus} мм) для ${filmType}: t₀ = ${baseExposure.toFixed(3)} мин\n`;
+            } else {
+              // Для других типов плёнок используем номограмму D7 и применяем фактор
+              baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulseArina7, 'D7', thickness);
+              filmFactor = filmFactors['pulse'][filmType] || 1.0;
+              calculationLog += `1. Базовое время из номограммы Арина-7 (F₀=${baseFocus} мм) для D7: t₀ = ${baseExposure.toFixed(3)} мин\n` +
+                `2. Корректировка для плёнки ${filmType}: ω₁ = ${filmFactor}\n` +
+                `t₁ = t₀ × ω₁ = ${baseExposure.toFixed(3)} × ${filmFactor} = ${(baseExposure * filmFactor).toFixed(3)} мин\n`;
+            }
+          } else if (apparatusType === 'Арина-9') {
+            baseFocus = 700; // Базовое расстояние для Арина-9
+            if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
+              baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulseArina9, filmType, thickness);
+              filmFactor = 1.0; // Фактор уже учтен в номограмме
+              calculationLog += `1. Базовое время из номограммы Арина-9 (F₀=${baseFocus} мм) для ${filmType}: t₀ = ${baseExposure.toFixed(3)} мин\n`;
+            } else {
+              // Для других типов плёнок используем номограмму D7 и применяем фактор
+              baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulseArina9, 'D7', thickness);
+              filmFactor = filmFactors['pulse'][filmType] || 1.0;
+              calculationLog += `1. Базовое время из номограммы Арина-9 (F₀=${baseFocus} мм) для D7: t₀ = ${baseExposure.toFixed(3)} мин\n` +
+                `2. Корректировка для плёнки ${filmType}: ω₁ = ${filmFactor}\n` +
+                `t₁ = t₀ × ω₁ = ${baseExposure.toFixed(3)} × ${filmFactor} = ${(baseExposure * filmFactor).toFixed(3)} мин\n`;
+            }
           } else {
-            // Для других типов плёнок используем номограмму D7 и применяем фактор
-            baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulse, 'D7', thickness);
-            filmFactor = filmFactors['pulse'][filmType] || 1.0;
-            calculationLog += `1. Базовое время из номограммы Арина-9 (F₀=700 мм) для D7: t₀ = ${baseExposure.toFixed(3)} мин\n` +
-              `2. Корректировка для плёнки ${filmType}: ω₁ = ${filmFactor}\n` +
-              `t₁ = t₀ × ω₁ = ${baseExposure.toFixed(3)} × ${filmFactor} = ${(baseExposure * filmFactor).toFixed(3)} мин\n`;
+            throw new Error('Неизвестный тип импульсного аппарата');
           }
 
           adjustedExposure = baseExposure * filmFactor;
@@ -387,9 +434,11 @@ const ExposureCalculatorPage = () => {
             `Радиационная толщина: ${thickness} мм\n` +
             `Фокусное расстояние: ${focusDistance} мм\n\n`;
 
-          // Определение базового времени из номограмм для МСТ-200 (F0=700мм)
-          baseExposure = interpolateFromNomogram(nomogramsSteelConstant, voltage, thickness);
-          calculationLog += `1. Базовое время из номограммы МСТ-200 (F₀=700 мм): t₀ = ${baseExposure.toFixed(3)} мА·мин\n`;
+          baseFocus = 700; // Базовое расстояние для МСТ-200
+
+          // Определение базового времени из номограмм для МСТ-200
+          baseExposure = interpolateFromNomogram(nomogramsSteelConstantMST200, voltage, thickness);
+          calculationLog += `1. Базовое время из номограммы МСТ-200 (F₀=${baseFocus} мм): t₀ = ${baseExposure.toFixed(3)} мА·мин\n`;
 
           // Корректировка для типа плёнки
           filmFactor = filmFactors['constant'][filmType] || 1.0;
@@ -400,7 +449,6 @@ const ExposureCalculatorPage = () => {
         }
 
         // Корректировка для фокусного расстояния
-        const baseFocus = 700; // Для обоих аппаратов базовое расстояние 700мм
         const focusCorrection = Math.pow(focusDistance / baseFocus, 2);
         const finalExposureMin = adjustedExposure * focusCorrection;
 
