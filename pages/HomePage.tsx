@@ -41,36 +41,42 @@ const HomePage = () => {
   return (
     <div className="animate-fade-in">
       <div className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">Инструменты для специалиста РК</h1>
+        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white">Инструменты для специалиста по радиографическому контролю</h1>
         <p className="mt-4 max-w-2xl mx-auto text-lg text-slate-600 dark:text-slate-300">
           Онлайн-калькуляторы для расчёта параметров радиографического контроля в соответствии с отраслевым стандартами.
         </p>
+
+        {/* ============================================================
+                БЛОК УВЕДОМЛЕНИЙ И РЕКЛАМЫ
          <div className="mt-6 flex justify-center">
             <div className="bg-amber-100 dark:bg-amber-900/50 border border-amber-300 dark:border-amber-700 text-amber-800 dark:text-amber-200 text-sm font-medium px-4 py-2 rounded-lg inline-flex items-center gap-2">
                 <AlertTriangle size={16} />
                 Приложение находится в режиме тестирования!
             </div>
         </div>
+              Пример использования для уведомления о тестировании:
+                      ============================================================ */}
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
         <Card
           to="/parameters"
           icon={<Sliders size={24} />}
           title="Параметры радиографического контроля"
-          description="Расчёт фокусного расстояния, числа экспозиций и других параметров по ГОСТ Р 50.05.07-2018."
+          description="Расчёт фокусного расстояния, числа экспозиций и других параметров по ГОСТ Р 50.05.07-2018. Генерация и печать отчётов"
         />
         <Card
           to="/exposure"
           icon={<Timer size={24} />}
           title="Время экспозиции"
-          description="Расчёт времени экспозиции для рентгеновских аппаратов и радионуклидных источников по ТУ РГК 1-2024."
+          description="Расчёт времени экспозиции для рентгеновских аппаратов и радионуклидных источников по ТУ РГК 1-2024. Подробный отчёт с расчётами"
         />
         <Card
           to="/activity"
           icon={<Radiation size={24} />}
           title="Активность источника"
-          description="Определение активности радионуклидных источников (Se-75, Ir-192) с учётом периода полураспада."
+          description="Определение активности радионуклидных источников (Se-75, Ir-192) с учётом периода полураспада. Генерация и печать таблицы"
         />
         <Card
           to="/geometric-unsharpness"

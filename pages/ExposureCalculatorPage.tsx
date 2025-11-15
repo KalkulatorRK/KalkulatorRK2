@@ -25,18 +25,18 @@ const nomogramsSteelConstantMST200: Record<string, number[]> = {
   '200':[15,1.5,20,2.8,25,5.0,30,10.0,35,20.0,40,35.0,45,67.0,50,140.0,55,250.2,60,480.0,65,1000.0]
 };
 
-// Номограммы для Арина-7 (сталь, F=500мм, плёнки: D7 + Pb 0,027 мм, F8+RCF, F8+NDT1200)
+// Расширенные номограммы для Арина-7 (сталь, F=500мм)
 const nomogramsSteelPulseArina7: Record<string, number[]> = {
-  'D7':[2.5,0.95,5,1.5,10,3.0,15,6.2,20,15.0],
-  'F8+RCF':[2.5,0.24,5,0.32,10,0.7,15,1.6,20,3.2,25,6.8,30,15.0],
-  'F8+NDT1200':[5,0.08,10,0.2,15,0.42,20,0.9,25,1.9,30,4.0,35,8.2]
+  'D7': [2.5, 0.95, 5, 1.5, 7.5, 2.2, 10, 3.0, 12.5, 4.5, 15, 6.2, 17.5, 9.0, 20, 15.0, 22.5, 23.0, 25, 35.0, 27.5, 50.0, 30, 75.0],
+  'F8+RCF': [2.5, 0.24, 5, 0.32, 7.5, 0.45, 10, 0.7, 12.5, 1.0, 15, 1.6, 17.5, 2.3, 20, 3.2, 22.5, 4.5, 25, 6.8, 27.5, 10.0, 30, 15.0, 32.5, 22.0, 35, 32.0],
+  'F8+NDT1200': [5, 0.08, 7.5, 0.12, 10, 0.2, 12.5, 0.3, 15, 0.42, 17.5, 0.6, 20, 0.9, 22.5, 1.3, 25, 1.9, 27.5, 2.7, 30, 4.0, 32.5, 5.8, 35, 8.2, 37.5, 11.5, 40, 16.0]
 };
 
-// Номограммы для Арина-9 (сталь, F=700мм, плёнки: D7 + Pb 0,027 мм, F8+RCF, F8+NDT1200)
+// Расширенные номограммы для Арина-9 (сталь, F=700мм)
 const nomogramsSteelPulseArina9: Record<string, number[]> = {
-  'D7':[2.5,1.5,5,2.0,10,3.8,15,7.0,20,13.0],
-  'F8+RCF':[2.5,0.36,5,0.49,10,0.9,15,1.8,20,3.0,25,5.6,30,10.0],
-  'F8+NDT1200':[5,0.15,10,0.25,15,0.48,20,0.8,25,1.6,30,2.8,35,5.0,40,9.0]
+  'D7': [2.5, 1.5, 5, 2.0, 7.5, 2.8, 10, 3.8, 12.5, 5.2, 15, 7.0, 17.5, 9.5, 20, 13.0, 22.5, 18.0, 25, 25.0, 27.5, 35.0, 30, 48.0, 32.5, 65.0, 35, 85.0],
+  'F8+RCF': [2.5, 0.36, 5, 0.49, 7.5, 0.65, 10, 0.9, 12.5, 1.25, 15, 1.8, 17.5, 2.4, 20, 3.0, 22.5, 4.0, 25, 5.6, 27.5, 7.5, 30, 10.0, 32.5, 13.5, 35, 18.0, 37.5, 24.0, 40, 32.0],
+  'F8+NDT1200': [5, 0.15, 7.5, 0.20, 10, 0.25, 12.5, 0.32, 15, 0.48, 17.5, 0.65, 20, 0.8, 22.5, 1.1, 25, 1.6, 27.5, 2.2, 30, 2.8, 32.5, 3.8, 35, 5.0, 37.5, 6.8, 40, 9.0, 42.5, 12.0, 45, 16.0]
 };
 
 // Факторы плёнок из Таблицы 8
@@ -129,14 +129,28 @@ function interpolateFromNomogram(nomogramData: Record<string, number[]>, key: st
 }
 
 /**
- * Интерполяция из номограмм для импульсных аппаратов
+ * Улучшенная интерполяция для импульсных аппаратов с обработкой граничных значений
  */
 function interpolateFromPulseNomogram(nomogramData: Record<string, number[]>, filmType: string, thickness: number): number {
   if (!nomogramData[filmType]) {
     console.warn(`Нет данных номограммы для плёнки: ${filmType}`);
     return 1.0;
   }
+
   const data = nomogramData[filmType];
+
+  // Если толщина меньше минимальной в номограмме - используем минимальное значение
+  if (thickness < data[0]) {
+    console.warn(`Толщина ${thickness} мм меньше минимальной в номограмме (${data[0]} мм), используется минимальное значение`);
+    return data[1];
+  }
+
+  // Если толщина больше максимальной в номограмме - используем максимальное значение
+  if (thickness > data[data.length - 2]) {
+    console.warn(`Толщина ${thickness} мм больше максимальной в номограмме (${data[data.length - 2]} мм), используется максимальное значение`);
+    return data[data.length - 1];
+  }
+
   return interpolateLinear(data, thickness);
 }
 
@@ -310,8 +324,8 @@ const ExposureCalculatorPage = () => {
   // Динамические опции для плёнок в зависимости от режима работы
   const xrayFilmOptions = useMemo(() => {
     if (xrayInputs.operationMode === 'pulse') {
-      // Для импульсных аппаратов - все типы плёнок как для радионуклидных источников
-      return Object.keys(filmFactors['Ir-192']);
+      // Для импульсных аппаратов - специальные типы плёнок
+      return ['D7', 'F8+RCF', 'F8+NDT1200', 'D2', 'D4', 'D5', 'D8', 'INDUSTREX Flex HR', 'DR детектор'];
     }
     // Для постоянных аппаратов - стандартный набор плёнок
     return Object.keys(filmFactors.constant);
@@ -349,6 +363,18 @@ const ExposureCalculatorPage = () => {
   // Обработчик изменений для радионуклидных источников
   const handleIsotopeChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+      // Валидация даты паспорта
+      if (name === 'passportDate') {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Сбрасываем время для корректного сравнения
+
+        if (selectedDate > today) {
+          alert('Дата паспорта не может быть позднее текущей даты');
+          return; // Прерываем выполнение если дата невалидна
+        }
+      }
+
     setIsotopeInputs(prev => ({...prev, [name]: value}));
   };
 
@@ -392,6 +418,8 @@ const ExposureCalculatorPage = () => {
           // Определение базового времени из соответствующих номограмм
           if (apparatusType === 'Арина-7') {
             baseFocus = 500; // Базовое расстояние для Арина-7
+
+            // Проверяем, есть ли данные для выбранной плёнки в номограмме
             if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
               baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulseArina7, filmType, thickness);
               filmFactor = 1.0; // Фактор уже учтен в номограмме
@@ -406,6 +434,8 @@ const ExposureCalculatorPage = () => {
             }
           } else if (apparatusType === 'Арина-9') {
             baseFocus = 700; // Базовое расстояние для Арина-9
+
+            // Проверяем, есть ли данные для выбранной плёнки в номограмме
             if (filmType === 'D7' || filmType === 'F8+RCF' || filmType === 'F8+NDT1200') {
               baseExposure = interpolateFromPulseNomogram(nomogramsSteelPulseArina9, filmType, thickness);
               filmFactor = 1.0; // Фактор уже учтен в номограмме
@@ -482,6 +512,21 @@ const ExposureCalculatorPage = () => {
         if (!thickness || !focusDistance) {
           throw new Error('Пожалуйста, заполните все обязательные поля');
         }
+
+      // Дополнительная валидация даты паспорта
+      if (activityMethod === 'passport') {
+        const selectedDate = new Date(passportDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (selectedDate > today) {
+          throw new Error('Дата паспорта не может быть позднее текущей даты');
+        }
+
+        if (!passportActivity || !passportDate) {
+          throw new Error('Заполните все поля паспортных данных');
+        }
+      }
 
         let activity = 0;
         let activityCalcLog = '';
@@ -649,8 +694,8 @@ const ExposureCalculatorPage = () => {
                 onChange={handleXrayChange}
               >
                 <option value="steel">Сталь</option>
-                <option value="aluminum" disabled>Алюминий/Магний (в разработке)</option>
-                <option value="titanium" disabled>Титан (в разработке)</option>
+                <option value="aluminum" disabled={xrayInputs.operationMode === 'pulse'}>Алюминий/Магний</option>
+                <option value="titanium" disabled={xrayInputs.operationMode === 'pulse'}>Титан</option>
               </SelectField>
 
               <div className="md:col-span-2">
@@ -738,7 +783,8 @@ const ExposureCalculatorPage = () => {
                       type="date" 
                       name="passportDate" 
                       value={isotopeInputs.passportDate} 
-                      onChange={handleIsotopeChange} 
+                      onChange={handleIsotopeChange}
+                      max={new Date().toISOString().split('T')[0]} // Добавляем максимальную дату - сегодня
                     />
                   </div>
                 )}
