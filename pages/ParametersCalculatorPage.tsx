@@ -58,7 +58,7 @@ const schemeDetails: Record<string, { name: string; description: string }> = {
     '5a': { name: 'Чертёж 3а', description: '' },
     '5b': { name: 'Чертёж 3б', description: '' },
     '5v': { name: 'Чертёж 3в', description: 'D до 100 мм' },
-    '5g': { name: 'Чертёж 3г', description: '' },
+    '5g': { name: 'Чертёж 3г', description: 'D более 50 мм' },
     '5d': { name: 'Чертёж 3д', description: 'D более 50 мм' },
     '5e': { name: 'Чертёж 3е', description: '' },
     '5zh': { name: 'Чертёж 3ж', description: 'D не более 2 м' },
