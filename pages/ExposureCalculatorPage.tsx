@@ -694,9 +694,24 @@ const ExposureCalculatorPage = () => {
                 onChange={handleXrayChange}
               >
                 <option value="steel">Сталь</option>
-                <option value="aluminum" disabled={xrayInputs.operationMode === 'pulse'}>Алюминий/Магний</option>
-                <option value="titanium" disabled={xrayInputs.operationMode === 'pulse'}>Титан</option>
+                <option
+                  value="aluminum"
+                  disabled={xrayInputs.operationMode === 'pulse' || xrayInputs.apparatusType === 'МСТ-200'}
+                >
+                  Алюминий/Магний
+                </option>
+                <option
+                  value="titanium"
+                  disabled={xrayInputs.operationMode === 'pulse' || xrayInputs.apparatusType === 'МСТ-200'}
+                >
+                  Титан
+                </option>
               </SelectField>
+              {(xrayInputs.operationMode === 'pulse' || xrayInputs.apparatusType === 'МСТ-200') && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 md:col-span-2">
+                  Для {xrayInputs.apparatusType || 'данного аппарата'} расчет возможен только для стали
+                </p>
+              )}
 
               <div className="md:col-span-2">
                 <SelectField 
