@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Calculator, RotateCcw, FileText, Download, Printer, X } from 'lucide-react';
+import { Calculator, RotateCcw, FileText, Download, Printer, X, AlertTriangle } from 'lucide-react';
 
 // Импорт изображений схем для корректной обработки путей Vite
 import scheme4_6 from '../img/scheme_4_6.png';
@@ -65,11 +65,11 @@ const schemeDetails: Record<string, { name: string; description: string }> = {
     '5d': { name: 'Чертёж 3д', description: 'D более 50 мм' },
     '5e': { name: 'Чертёж 3е', description: '' },
     '5zh': { name: 'Чертёж 3ж', description: 'D не более 2 м' },
-    '5z': { name: 'Чертёж 3и', description: 'D более 50 мм' }
+    '5z': { name: 'Чертёж 3и', description: 'D более 2 м' }
 };
 
-// Компонент поля ввода
-const InputField = ({ label, name, value, onChange, disabled = false, ...props }: any) => (
+// Компонент поля ввода с плейсхолдером
+const InputField = ({ label, name, value, onChange, disabled = false, placeholder = "введите числовое значение", ...props }: any) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
         <input
@@ -78,6 +78,7 @@ const InputField = ({ label, name, value, onChange, disabled = false, ...props }
             value={value}
             onChange={onChange}
             disabled={disabled}
+            placeholder={placeholder}
             className={`mt-1 block w-full p-2 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
                 disabled ? 'opacity-50 cursor-not-allowed' : ''
             }`}
@@ -110,16 +111,27 @@ const ResultItem = ({ label, value }: { label: string, value: string | number })
     </div>
 );
 
+// Компонент предупреждения
+const WarningAlert = ({ message }: { message: string }) => (
+    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+        <AlertTriangle className="text-amber-600 mt-0.5 flex-shrink-0" size={20} />
+        <div>
+            <p className="text-amber-800 text-sm font-medium">Внимание!</p>
+            <p className="text-amber-700 text-sm mt-1">{message}</p>
+        </div>
+    </div>
+);
+
 // Основной компонент калькулятора параметров
 const ParametersCalculatorPage = () => {
-    // Состояние для хранения входных данных
+    // Состояние для хранения входных данных - теперь все поля пустые
     const [inputs, setInputs] = useState({
         scheme: '4_6',
-        d_focus: '3.0',
-        h_thickness: '9',
-        z_sensitivity: '0.2',
-        d_outer: '159',
-        d_inner: '150',
+        d_focus: '',
+        h_thickness: '',
+        z_sensitivity: '',
+        d_outer: '',
+        d_inner: '',
     });
 
     // Состояния для результатов и UI
@@ -142,11 +154,11 @@ const ParametersCalculatorPage = () => {
     const resetForm = () => {
         setInputs({
             scheme: '4_6',
-            d_focus: '3.0',
-            h_thickness: '9',
-            z_sensitivity: '0.2',
-            d_outer: '159',
-            d_inner: '150',
+            d_focus: '',
+            h_thickness: '',
+            z_sensitivity: '',
+            d_outer: '',
+            d_inner: '',
         });
         setResults(null);
         setCalculationLog(null);
@@ -213,6 +225,14 @@ const ParametersCalculatorPage = () => {
         for (const [key, val] of Object.entries(logData.resultsData)) {
             lines.push(`  ${key} = ${typeof val === 'number' ? val.toFixed(4) : val}`);
         }
+
+        // Добавляем предупреждение для схемы 3б в отчёт
+        if (scheme === '5b') {
+            lines.push('');
+            lines.push('ПРИМЕЧАНИЕ:');
+            lines.push('ГОСТ Р 50.05.07-18 Г.5 Для схемы на рисунке 3б при длине радиографической пленки менее внутреннего диаметра сварного соединения, а также для схем на рисунке 3ж, и расстояние и число участков (экспозиций) определяют опытным путем с учетом требований настоящего стандарта.');
+        }
+
         lines.push('');
         lines.push('Примечание: Для окончательных решений сверяйтесь с актуальной методической документацией.');
 
@@ -307,7 +327,7 @@ const ParametersCalculatorPage = () => {
                     }
                 }
                 const angle = 360 / N;
-                const L = (2 * Math.PI * (D / 2)) / N;
+                const L = (Math.PI * D) / N; // Исправлено: длина участка по окружности
                 log.resultsData = { f: `${f.toFixed(1)} мм`, N, 'Угол': `${angle.toFixed(0)}°`, L: `${L.toFixed(0)} мм` };
                 resultNode = (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -342,14 +362,18 @@ const ParametersCalculatorPage = () => {
                         break;
                     }
                 }
-                const L = D / N;
+                const L = (Math.PI * D) / N; // ИСПРАВЛЕНО: длина участка по окружности как в схеме 3г
                 log.resultsData = { f: `${f.toFixed(1)} мм`, N, L: `${L.toFixed(0)} мм` };
                 resultNode = (
-                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <ResultItem label="Расстояние от источника до поверхности сварного шва f: не менее" value={`${f.toFixed(1)} мм`} />
-                        <ResultItem label="Экспозиций N:" value={N} />
-                        <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <ResultItem label="Расстояние от источника до поверхности сварного шва f: не менее" value={`${f.toFixed(1)} мм`} />
+                            <ResultItem label="Экспозиций N:" value={N} />
+                            <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
+                        </div>
+                        {/* Предупреждение для схемы 3б */}
+                        <WarningAlert message="ГОСТ Р 50.05.07-18 Г.5 Для схемы на рисунке 3б при длине радиографической пленки менее внутреннего диаметра сварного соединения, а также для схем на рисунке 3ж, и расстояние и число участков (экспозиций) определяют опытным путем с учетом требований настоящего стандарта." />
+                    </>
                 );
                 break;
             }
@@ -547,9 +571,33 @@ const ParametersCalculatorPage = () => {
                             <option key={key} value={key}>{`${name}${description ? ` (${description})` : ''}`}</option>
                         )}
                     </SelectField>
-                    <InputField label="Размер фокусного пятна Φ, мм" name="d_focus" type="number" step="0.1" min="0.1" value={inputs.d_focus} onChange={handleChange} />
-                    <InputField label="Радиационная толщина s, мм" name="h_thickness" type="number" step="0.1" min="0.1" value={inputs.h_thickness} onChange={handleChange} />
-                    <InputField label="Требуемая чувствительность K, мм" name="z_sensitivity" type="number" step="0.01" min="0.01" value={inputs.z_sensitivity} onChange={handleChange} />
+                    <InputField
+                        label="Размер фокусного пятна Φ, мм"
+                        name="d_focus"
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={inputs.d_focus}
+                        onChange={handleChange}
+                    />
+                    <InputField
+                        label="Радиационная толщина s, мм"
+                        name="h_thickness"
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={inputs.h_thickness}
+                        onChange={handleChange}
+                    />
+                    <InputField
+                        label="Требуемая чувствительность K, мм"
+                        name="z_sensitivity"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={inputs.z_sensitivity}
+                        onChange={handleChange}
+                    />
                     <InputField
                         label="Наружный диаметр D, мм"
                         name="d_outer"
