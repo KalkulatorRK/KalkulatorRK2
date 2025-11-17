@@ -623,7 +623,7 @@ const ParametersCalculatorPage = () => {
                 <div className="flex flex-wrap gap-2 pt-4 mt-4 border-t border-slate-200 dark:border-slate-700">
                     <button onClick={calculate} className="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"><Calculator size={18} />Рассчитать</button>
                     <button onClick={resetForm} className="flex-1 bg-slate-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-600 transition flex items-center justify-center gap-2"><RotateCcw size={18} />Сбросить</button>
-                    <button onClick={() => setHelpVisible(true)} disabled={!calculationLog} className="flex-1 bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><FileText size={18} />Справка</button>
+                    <button onClick={() => setHelpVisible(true)} disabled={!calculationLog} className="flex-1 bg-gray-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><FileText size={18} />Отчёт</button>
                     <button onClick={handlePrint} disabled={!results} className="flex-1 bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"><Printer size={18} />Печать</button>
                 </div>
             </div>
