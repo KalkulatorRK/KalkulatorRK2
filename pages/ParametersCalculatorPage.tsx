@@ -289,7 +289,12 @@ const ParametersCalculatorPage = () => {
             case '5v': lines.push('  f = C * D'); break;
             case '5g': lines.push('  f = 0.5 * (1.5 * C * (D - d) - D)'); break;
             case '5d': lines.push('  f = 0.5 * (C * (1.4 * D - d) - D)'); break;
-            case '5zh': lines.push('  f_min = 0.5 * C * (1 - m) * D'); break;
+            case '5zh':
+                lines.push('  f ≥ 0,5C(1 - m)D');
+                lines.push('  r = √(1 - (0,25⋅C²(1 - m²))/(m²(C + 1)))');
+                lines.push('  N ≥ 180° / (arcsin(rm) - arcsin(rm/(2n - m)))');
+                lines.push('  (расчёт по методике ГОСТ для схемы 3ж)');
+                break;
         }
         if (scheme !== '5e' && scheme !== '5z' && scheme !== '5b') {
            lines.push('  C = (2 * Φ) / K, (где C ≥ 4)');
@@ -300,10 +305,16 @@ const ParametersCalculatorPage = () => {
             lines.push('  m = d/D');
             lines.push('  n - геометрический параметр');
         }
+        if (scheme === '5zh') {
+            lines.push('  C = (2 * Φ) / K, (где C ≥ 4)');
+            lines.push('  m = d/D');
+            lines.push('  n - геометрический параметр');
+        }
         lines.push('  f - расстояние от источника до поверхности сварного шва, мм');
         lines.push('  N - число экспозиций');
         lines.push('  L - длина контролируемого за одну экспозицию участка, мм');
         lines.push('');
+
         lines.push('------------------------------------');
 
         // Итоговые результаты
@@ -317,6 +328,17 @@ const ParametersCalculatorPage = () => {
             lines.push('');
             lines.push('ПРИМЕЧАНИЕ:');
             lines.push('Расчёт для чертежа 3б выполнен по методике ГОСТ 7512-82 Приложение 4 п. 4');
+        }
+
+        // Добавляем информацию о методике для схемы 5zh
+        if (scheme === '5zh') {
+            lines.push('');
+            lines.push('ПРИМЕЧАНИЕ:');
+            lines.push('Для схемы черт. 3ж (5ж по ГОСТ 7512-82) определяют максимально возможное');
+            lines.push('(исходя из внутреннего диаметра контролируемого изделия и размеров радиационной');
+            lines.push('или коллимирующей головки гамма-дефектоскопа или размеров излучателя');
+            lines.push('рентгеновского аппарата) расстояние f (по диаметру изделия) которое должно');
+            lines.push('быть не менее величины рассчитанного f');
         }
 
         lines.push('');
@@ -470,6 +492,122 @@ const calculateScheme5b = (Φ: number, K: number, D: number, d: number, l: numbe
         </>
     );
 };
+
+    // Функция расчёта для схемы 5zh по методике ГОСТ
+    const calculateScheme5zh = (Φ: number, K: number, D: number, d: number, log: { steps: string[], resultsData: Record<string, any> }) => {
+        const m = d / D;
+        const C = Math.max((2 * Φ) / K, 4);
+
+        log.steps.push(`Расчёт основных параметров:`);
+        log.steps.push(`  m = d / D = ${d} / ${D} = ${m.toFixed(4)}`);
+        log.steps.push(`  C = max(2Φ/K, 4) = max(${(2 * Φ).toFixed(2)}/${K}, 4) = ${C.toFixed(4)}`);
+
+        // Минимальное требуемое расстояние f
+        const f_min_required = 0.5 * C * (1 - m) * D;
+        log.steps.push(`  Минимальное требуемое f = 0,5C(1 - m)D = 0,5 * ${C.toFixed(4)} * (1 - ${m.toFixed(4)}) * ${D} = ${f_min_required.toFixed(1)} мм`);
+
+        // Проверка возможности размещения источника внутри трубы
+        if (f_min_required > d) {
+            log.steps.push(`  Условие не выполняется: f (${f_min_required.toFixed(1)} мм) > d (${d} мм)`);
+            return (
+                <div className="text-red-700 bg-red-100 p-4 rounded-lg">
+                    <p className="font-bold">❌ Условие не выполняется</p>
+                    <p>f ≥ {f_min_required.toFixed(1)} мм &gt; d = {d} мм</p>
+                    <p className="mt-2">Необходимо использовать источник с меньшими размерами фокусного пятна.</p>
+                </div>
+            );
+        }
+
+        log.steps.push(`  Условие выполнено: f (${f_min_required.toFixed(1)} мм) ≤ d (${d} мм)`);
+
+        // Расчёт вспомогательного коэффициента r
+        const numerator = 0.25 * Math.pow(C, 2) * (1 - Math.pow(m, 2));
+        const denominator = Math.pow(m, 2) * (C + 1);
+        const r = Math.sqrt(1 - numerator / denominator);
+
+        log.steps.push(`  Расчёт коэффициента r:`);
+        log.steps.push(`    r = √(1 - (0,25⋅C²(1 - m²))/(m²(C + 1)))`);
+        log.steps.push(`    r = √(1 - (0,25⋅${C.toFixed(4)}²(1 - ${m.toFixed(4)}²))/(${m.toFixed(4)}²(${C.toFixed(4)} + 1)))`);
+        log.steps.push(`    r = √(1 - ${numerator.toFixed(4)} / ${denominator.toFixed(4)})`);
+        log.steps.push(`    r = √(1 - ${(numerator / denominator).toFixed(4)})`);
+        log.steps.push(`    r = √(${(1 - numerator / denominator).toFixed(4)}) = ${r.toFixed(4)}`);
+
+        // Поиск минимального количества экспозиций N
+        let optimalN = Infinity;
+        let optimalN_for_n = 0;
+
+        log.steps.push(`  Поиск минимального количества экспозиций N:`);
+
+        for (let n = 1; n <= 5; n++) {
+            const angle1 = Math.asin(r * m) * 180 / Math.PI;
+            const angle2 = Math.asin(r * m / (2 * n - m)) * 180 / Math.PI;
+
+            if (angle1 <= angle2) {
+                log.steps.push(`    n = ${n}: arcsin(rm) (${angle1.toFixed(2)}°) ≤ arcsin(rm/(2n - m)) (${angle2.toFixed(2)}°) - условие не выполняется`);
+                continue;
+            }
+
+            const N = 180 / (angle1 - angle2);
+            const roundedN = Math.ceil(N);
+
+            log.steps.push(`    n = ${n}: N ≥ 180° / (arcsin(rm) - arcsin(rm/(2n - m)))`);
+            log.steps.push(`        = 180° / (${angle1.toFixed(2)}° - ${angle2.toFixed(2)}°)`);
+            log.steps.push(`        = 180° / ${(angle1 - angle2).toFixed(2)}° = ${N.toFixed(2)} → ${roundedN} экспозиций`);
+
+            if (roundedN < optimalN) {
+                optimalN = roundedN;
+                optimalN_for_n = n;
+            }
+        }
+
+        if (optimalN === Infinity) {
+            log.steps.push(`  Решение не найдено для n от 1 до 5`);
+            return (
+                <div className="text-amber-700 bg-amber-100 p-4 rounded-lg">
+                    <p className="font-bold">⚠️ Решение не найдено</p>
+                    <p>Для заданных параметров не удалось найти решение, удовлетворяющее условиям ГОСТ.</p>
+                    <p className="mt-2">Рекомендуется использовать источник с меньшим фокусным пятном.</p>
+                </div>
+            );
+        }
+
+        const angle = 360 / optimalN;
+        const L = (Math.PI * D) / optimalN;
+
+        log.steps.push(`  Оптимальное решение: n = ${optimalN_for_n}, N = ${optimalN} экспозиций`);
+        log.steps.push(`  Угол между экспозициями: 360° / ${optimalN} = ${angle.toFixed(1)}°`);
+        log.steps.push(`  Длина участка L: π * ${D} / ${optimalN} = ${L.toFixed(0)} мм`);
+
+        log.resultsData = {
+            'Коэффициент C': C.toFixed(2),
+            'Минимальное расстояние f': `${f_min_required.toFixed(1)} мм`,
+            'Коэффициент r': r.toFixed(4),
+            'Экспозиций N': optimalN,
+            'Угол между экспозициями': `${angle.toFixed(1)}°`,
+            'Длина участка L': `${L.toFixed(0)} мм`,
+            'Геометрический параметр n': optimalN_for_n
+        };
+
+        return (
+            <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <ResultItem label="Коэффициент C:" value={C.toFixed(2)} />
+                    <ResultItem label="Минимальное расстояние f:" value={`${f_min_required.toFixed(1)} мм`} />
+                    <ResultItem label="Коэффициент r:" value={r.toFixed(4)} />
+                    <ResultItem label="Экспозиций N:" value={optimalN} />
+                    <ResultItem label="Угол между экспозициями:" value={`${angle.toFixed(1)}°`} />
+                    <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
+                </div>
+
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-blue-800 text-sm font-medium">📝 Примечание для схемы 3ж</p>
+                    <p className="text-blue-700 text-sm mt-1">
+                        Для схемы черт. 3ж (5ж по ГОСТ 7512-82) определяют максимально возможное (исходя из внутреннего диаметра контролируемого изделия и размеров радиационной или коллимирующей головки гамма-дефектоскопа или размеров излучателя рентгеновского аппарата) расстояние f (по диаметру изделия) которое должно быть не менее величины рассчитанного f.
+                    </p>
+                </div>
+            </>
+        );
+    };
 
     // Основная функция расчёта
     const calculate = () => {
@@ -663,32 +801,9 @@ const calculateScheme5b = (Φ: number, K: number, D: number, d: number, l: numbe
                 }
                 break;
             }
-             case '5zh': {
-                // Схема 5ж - для труб с внутренним размещением
-                const m = d / D;
-                const C = getC(Φ, K);
-                log.steps.push(`m = ${m.toFixed(4)}, C = ${C.toFixed(4)}`);
-                const f_min_required = 0.5 * C * (1 - m) * D;
-                log.steps.push(`Мин. требуемое f = 0.5 * C * (1-m) * D = ${f_min_required.toFixed(3)} мм`);
-                if (f_min_required > d) {
-                    log.steps.push(`Условие не выполняется: f (${f_min_required.toFixed(1)} мм) > d (${d} мм)`);
-                    log.resultsData = { 'Результат': 'Условие не выполняется' };
-                    resultNode = (
-                        <div className="text-red-700 bg-red-100 p-4 rounded-lg">
-                            <p className="font-bold">❌ Условие не выполняется</p>
-                            <p>f ≥ {f_min_required.toFixed(1)} мм &gt; d = {d} мм. Используйте источник с меньшим фокусным пятном.</p>
-                        </div>
-                    );
-                } else {
-                    log.steps.push(`Условие выполнено: f (${f_min_required.toFixed(1)} мм) <= d (${d} мм)`);
-                    log.resultsData = { 'Минимальное расстояние f': `≥ ${f_min_required.toFixed(1)} мм` };
-                    resultNode = (
-                        <>
-                           <ResultItem label="Минимальное расстояние f:" value={`≥ ${f_min_required.toFixed(1)} мм`} />
-                           <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-lg text-sm">Определите f исходя из диаметра {d} мм. Количество участков — опытным путём.</div>
-                        </>
-                    );
-                }
+            case '5zh': {
+                // Схема 5ж - для труб с внутренним размещением (новая методика по ГОСТ)
+                resultNode = calculateScheme5zh(Φ, K, D, d, log);
                 break;
             }
             case '5e':
