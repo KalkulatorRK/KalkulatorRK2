@@ -197,7 +197,7 @@ const GeometricUnsharpnessCalculatorPage = () => {
               />
               {errors.sensitivity && <p className="text-red-500 text-xs mt-1">{errors.sensitivity}</p>}
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Для проверки соответствия ГОСТ 7512-85
+                Для проверки соответствия ГОСТ 7512-82
               </p>
             </div>
 
@@ -278,7 +278,7 @@ const GeometricUnsharpnessCalculatorPage = () => {
 
           {/* Блок с нормативами */}
           <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
-            <h3 className="font-bold mb-3">Нормативные требования ГОСТ 7512-85</h3>
+            <h3 className="font-bold mb-3">Нормативные требования ГОСТ 7512-82</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-start gap-2">
                 <div className="w-3 h-3 bg-green-500 rounded-full mt-1 flex-shrink-0"></div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, ChangeEvent, ReactNode } from 'react';
 import { Calculator, RotateCcw, FileText, Download, Printer, X, AlertTriangle } from 'lucide-react';
 
 // Импорт изображений схем для корректной обработки путей Vite
@@ -68,8 +68,38 @@ const schemeDetails: Record<string, { name: string; description: string }> = {
     '5z': { name: 'Чертёж 3и', description: 'D более 2 м' }
 };
 
+// Типы для пропсов компонентов
+interface InputFieldProps {
+    label: string;
+    name: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
+    placeholder?: string;
+    type?: string;
+    step?: string;
+    min?: string;
+}
+
+interface SelectFieldProps {
+    label: string;
+    name: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+    children: ReactNode;
+}
+
+interface ResultItemProps {
+    label: string;
+    value: string | number;
+}
+
+interface WarningAlertProps {
+    message: string;
+}
+
 // Компонент поля ввода с плейсхолдером
-const InputField = ({ label, name, value, onChange, disabled = false, placeholder = "введите числовое значение", ...props }: any) => (
+const InputField = ({ label, name, value, onChange, disabled = false, placeholder = "введите числовое значение", ...props }: InputFieldProps) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
         <input
@@ -88,7 +118,7 @@ const InputField = ({ label, name, value, onChange, disabled = false, placeholde
 );
 
 // Компонент выпадающего списка
-const SelectField = ({ label, name, value, onChange, children }: any) => (
+const SelectField = ({ label, name, value, onChange, children }: SelectFieldProps) => (
     <div>
         <label htmlFor={name} className="block text-sm font-medium text-slate-700 dark:text-slate-300">{label}</label>
         <select
@@ -104,7 +134,7 @@ const SelectField = ({ label, name, value, onChange, children }: any) => (
 );
 
 // Компонент элемента результата
-const ResultItem = ({ label, value }: { label: string, value: string | number }) => (
+const ResultItem = ({ label, value }: ResultItemProps) => (
     <div className="bg-white dark:bg-slate-800 p-3 rounded-lg shadow-sm">
         <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
         <p className="text-lg font-bold text-blue-600 dark:text-blue-400">{value}</p>
@@ -112,7 +142,7 @@ const ResultItem = ({ label, value }: { label: string, value: string | number })
 );
 
 // Компонент предупреждения
-const WarningAlert = ({ message }: { message: string }) => (
+const WarningAlert = ({ message }: WarningAlertProps) => (
     <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
         <AlertTriangle className="text-amber-600 mt-0.5 flex-shrink-0" size={20} />
         <div>
@@ -122,10 +152,20 @@ const WarningAlert = ({ message }: { message: string }) => (
     </div>
 );
 
+// Типы для состояния
+interface InputsState {
+    scheme: string;
+    d_focus: string;
+    h_thickness: string;
+    z_sensitivity: string;
+    d_outer: string;
+    d_inner: string;
+}
+
 // Основной компонент калькулятора параметров
 const ParametersCalculatorPage = () => {
     // Состояние для хранения входных данных - теперь все поля пустые
-    const [inputs, setInputs] = useState({
+    const [inputs, setInputs] = useState<InputsState>({
         scheme: '4_6',
         d_focus: '',
         h_thickness: '',
@@ -135,7 +175,7 @@ const ParametersCalculatorPage = () => {
     });
 
     // Состояния для результатов и UI
-    const [results, setResults] = useState<React.ReactNode | null>(null);
+    const [results, setResults] = useState<ReactNode | null>(null);
     const [calculationLog, setCalculationLog] = useState<string | null>(null);
     const [helpVisible, setHelpVisible] = useState(false);
     const [currentScheme, setCurrentScheme] = useState<string | null>(null);
@@ -145,7 +185,7 @@ const ParametersCalculatorPage = () => {
     const printRef = useRef<HTMLDivElement>(null);
 
     // Обработчик изменения полей ввода
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setInputs(prev => ({ ...prev, [name]: value }));
     };
@@ -167,6 +207,12 @@ const ParametersCalculatorPage = () => {
         setAlertMessage('');
     };
 
+    // Определяем, должны ли быть отключены поля диаметров
+    const isDiameterInputsDisabled = inputs.scheme === '4_6';
+
+    // Определяем, должно ли быть отключено поле радиационной толщины
+    const isThicknessInputDisabled = ['5a', '5b', '5v', '5g', '5d', '5e', '5zh', '5z'].includes(inputs.scheme);
+
     // Построение текста справки для отчёта
     const buildHelpText = (logData: { steps: string[], resultsData: Record<string, any> }) => {
         const lines = [];
@@ -185,7 +231,12 @@ const ParametersCalculatorPage = () => {
         lines.push('');
         lines.push('Исходные данные:');
         lines.push(`  Φ (Размер фокусного пятна) = ${Φ} мм`);
-        lines.push(`  s (Радиационная толщина) = ${s} мм`);
+
+        // Добавляем радиационную толщину только если она используется в расчёте
+        if (!isThicknessInputDisabled) {
+            lines.push(`  s (Радиационная толщина) = ${s} мм`);
+        }
+
         lines.push(`  K (Требуемая чувствительность) = ${K} мм`);
 
         // Добавляем диаметры только если они используются в расчёте
@@ -248,7 +299,13 @@ const ParametersCalculatorPage = () => {
         const d = parseFloat(inputs.d_inner);
 
         // Валидация входных данных
-        if (isNaN(Φ) || isNaN(s) || isNaN(K) || Φ <=0 || s <=0 || K<=0) {
+        if (isNaN(Φ) || isNaN(K) || Φ <=0 || K<=0) {
+            setAlertMessage('Пожалуйста, заполните все обязательные поля корректными положительными числовыми значениями.');
+            return;
+        }
+
+        // Для схем, где используется радиационная толщина, проверяем её корректность
+        if (!isThicknessInputDisabled && (isNaN(s) || s <= 0)) {
             setAlertMessage('Пожалуйста, заполните все обязательные поля корректными положительными числовыми значениями.');
             return;
         }
@@ -284,7 +341,7 @@ const ParametersCalculatorPage = () => {
             );
         };
 
-        let resultNode: React.ReactNode = null;
+        let resultNode: ReactNode = null;
 
         // Расчёт в зависимости от выбранной схемы
         switch (inputs.scheme) {
@@ -509,9 +566,6 @@ const ParametersCalculatorPage = () => {
         URL.revokeObjectURL(url);
     };
 
-    // Определяем, должны ли быть отключены поля диаметров
-    const isDiameterInputsDisabled = inputs.scheme === '4_6';
-
     return (
         <div className="max-w-4xl mx-auto p-4 animate-fade-in">
              {/* Стили для печати */}
@@ -588,6 +642,8 @@ const ParametersCalculatorPage = () => {
                         min="0.1"
                         value={inputs.h_thickness}
                         onChange={handleChange}
+                        disabled={isThicknessInputDisabled}
+                        placeholder={isThicknessInputDisabled ? "не используется" : "введите числовое значение"}
                     />
                     <InputField
                         label="Требуемая чувствительность K, мм"
@@ -607,6 +663,7 @@ const ParametersCalculatorPage = () => {
                         value={inputs.d_outer}
                         onChange={handleChange}
                         disabled={isDiameterInputsDisabled}
+                        placeholder={isDiameterInputsDisabled ? "не используется" : "введите числовое значение"}
                     />
                     <InputField
                         label="Внутренний диаметр d, мм"
@@ -617,6 +674,7 @@ const ParametersCalculatorPage = () => {
                         value={inputs.d_inner}
                         onChange={handleChange}
                         disabled={isDiameterInputsDisabled}
+                        placeholder={isDiameterInputsDisabled ? "не используется" : "введите числовое значение"}
                     />
                 </div>
                 {alertMessage && <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">{alertMessage}</div>}
