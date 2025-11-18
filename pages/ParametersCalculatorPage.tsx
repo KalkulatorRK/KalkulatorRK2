@@ -98,6 +98,10 @@ interface WarningAlertProps {
     message: string;
 }
 
+interface InfoAlertProps {
+    message: string;
+}
+
 // Компонент поля ввода с плейсхолдером
 const InputField = ({ label, name, value, onChange, disabled = false, placeholder = "введите числовое значение", ...props }: InputFieldProps) => (
     <div>
@@ -152,6 +156,13 @@ const WarningAlert = ({ message }: WarningAlertProps) => (
     </div>
 );
 
+// Компонент информационного сообщения
+const InfoAlert = ({ message }: InfoAlertProps) => (
+    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-blue-800 text-sm">{message}</p>
+    </div>
+);
+
 // Типы для состояния
 interface InputsState {
     scheme: string;
@@ -160,6 +171,7 @@ interface InputsState {
     z_sensitivity: string;
     d_outer: string;
     d_inner: string;
+    film_length: string; // новое поле для длины снимка
 }
 
 // Основной компонент калькулятора параметров
@@ -172,6 +184,7 @@ const ParametersCalculatorPage = () => {
         z_sensitivity: '',
         d_outer: '',
         d_inner: '',
+        film_length: '', // новое поле для длины снимка
     });
 
     // Состояния для результатов и UI
@@ -199,6 +212,7 @@ const ParametersCalculatorPage = () => {
             z_sensitivity: '',
             d_outer: '',
             d_inner: '',
+            film_length: '',
         });
         setResults(null);
         setCalculationLog(null);
@@ -213,6 +227,9 @@ const ParametersCalculatorPage = () => {
     // Определяем, должно ли быть отключено поле радиационной толщины
     const isThicknessInputDisabled = ['5a', '5b', '5v', '5g', '5d', '5e', '5zh', '5z'].includes(inputs.scheme);
 
+    // Определяем, должно ли быть активно поле длины снимка
+    const isFilmLengthInputActive = inputs.scheme === '5b';
+
     // Построение текста справки для отчёта
     const buildHelpText = (logData: { steps: string[], resultsData: Record<string, any> }) => {
         const lines = [];
@@ -222,6 +239,7 @@ const ParametersCalculatorPage = () => {
         const K = parseFloat(inputs.z_sensitivity);
         const D = parseFloat(inputs.d_outer);
         const d = parseFloat(inputs.d_inner);
+        const l = parseFloat(inputs.film_length);
 
         // Заголовок и основная информация
         lines.push(`Технический отчёт`);
@@ -246,6 +264,12 @@ const ParametersCalculatorPage = () => {
             lines.push(`  m (Отношение диаметров d/D) = ${(d / D).toFixed(4)}`);
         }
 
+        // Добавляем длину снимка для схемы 5б
+        if (scheme === '5b') {
+            lines.push(`  l (Длина снимка) = ${l} мм`);
+            lines.push(`  b (l/d) = ${(l / d).toFixed(4)}`);
+        }
+
         lines.push('');
         lines.push('Ход расчёта:');
         logData.steps.forEach((st) => lines.push(`  - ${st}`));
@@ -256,14 +280,25 @@ const ParametersCalculatorPage = () => {
         switch (scheme) {
             case '4_6': lines.push('  f = C * s'); break;
             case '5a': lines.push('  f = 0.7 * C * (1 - m) * D'); break;
-            case '5b': lines.push('  f = 0.5 * C * D'); break;
+            case '5b':
+                lines.push('  f ≥ 0,5C(1 - m√(1 - b²))D');
+                lines.push('  q = (b(2n + 1)) / √((2n + 1 - m√(1 - b²))² + m²b²)');
+                lines.push('  N = 180° / (arcsin(qm) - arcsin(qm/(2n + 1)))');
+                lines.push('  (расчёт по ГОСТ 7512-82 Приложение 4 п. 4)');
+                break;
             case '5v': lines.push('  f = C * D'); break;
             case '5g': lines.push('  f = 0.5 * (1.5 * C * (D - d) - D)'); break;
             case '5d': lines.push('  f = 0.5 * (C * (1.4 * D - d) - D)'); break;
             case '5zh': lines.push('  f_min = 0.5 * C * (1 - m) * D'); break;
         }
-        if (scheme !== '5e' && scheme !== '5z') {
+        if (scheme !== '5e' && scheme !== '5z' && scheme !== '5b') {
            lines.push('  C = (2 * Φ) / K, (где C ≥ 4)');
+        }
+        if (scheme === '5b') {
+            lines.push('  C = (2 * Φ) / K, (где C ≥ 4)');
+            lines.push('  b = l/d');
+            lines.push('  m = d/D');
+            lines.push('  n - геометрический параметр');
         }
         lines.push('  f - расстояние от источника до поверхности сварного шва, мм');
         lines.push('  N - число экспозиций');
@@ -277,11 +312,11 @@ const ParametersCalculatorPage = () => {
             lines.push(`  ${key} = ${typeof val === 'number' ? val.toFixed(4) : val}`);
         }
 
-        // Добавляем предупреждение для схемы 3б в отчёт
+        // Добавляем информацию о методике для схемы 5б
         if (scheme === '5b') {
             lines.push('');
             lines.push('ПРИМЕЧАНИЕ:');
-            lines.push('ГОСТ Р 50.05.07-18 Г.5 Для схемы на рисунке 3б при длине радиографической пленки менее внутреннего диаметра сварного соединения, а также для схем на рисунке 3ж, и расстояние и число участков (экспозиций) определяют опытным путем с учетом требований настоящего стандарта.');
+            lines.push('Расчёт для чертежа 3б выполнен по методике ГОСТ 7512-82 Приложение 4 п. 4');
         }
 
         lines.push('');
@@ -290,6 +325,152 @@ const ParametersCalculatorPage = () => {
         return lines.join('\n');
     };
 
+    // Функция расчёта для схемы 5б по ГОСТ 7512-82
+const calculateScheme5b = (Φ: number, K: number, D: number, d: number, l: number, log: { steps: string[], resultsData: Record<string, any> }) => {
+    // Основные параметры
+    const m = d / D;
+    let currentL = l; // начинаем с введенного значения l
+    let foundSolution = false;
+    let optimalN = 0;
+    let optimalF = 0;
+    let optimalQ = 0;
+    let optimalL = l;
+    let usedAutoAdjustment = false;
+
+    log.steps.push(`Расчёт основных параметров:`);
+    log.steps.push(`  m = d / D = ${d} / ${D} = ${m.toFixed(4)}`);
+
+    // Проверка ограничения l < d
+    if (currentL >= d) {
+        log.steps.push(`Ошибка: l (${currentL} мм) ≥ d (${d} мм) - длина снимка должна быть меньше внутреннего диаметра`);
+        return (
+            <div className="text-red-700 bg-red-100 p-4 rounded-lg">
+                <p className="font-bold">❌ Ошибка в исходных данных</p>
+                <p>Длина снимка l ({currentL} мм) должна быть меньше внутреннего диаметра d ({d} мм)</p>
+            </div>
+        );
+    }
+
+    // Итерационный подбор с корректировкой l
+    for (let iteration = 0; iteration < 10; iteration++) {
+        const b = currentL / d;
+        const C = Math.max((2 * Φ) / K, 4);
+
+        // Минимальное расстояние f для текущего l
+        const currentF = 0.5 * C * (1 - m * Math.sqrt(1 - b * b)) * D;
+
+        if (iteration === 0) {
+            log.steps.push(`  Исходные параметры: l = ${currentL.toFixed(1)} мм, b = l/d = ${b.toFixed(4)}`);
+            log.steps.push(`  C = max(2Φ/K, 4) = max(${(2 * Φ).toFixed(2)}/${K}, 4) = ${C.toFixed(4)}`);
+            log.steps.push(`  f_min = 0,5C(1 - m√(1 - b²))D = ${currentF.toFixed(1)} мм`);
+        } else {
+            log.steps.push(`\nИтерация ${iteration}: l = ${currentL.toFixed(1)} мм, b = ${b.toFixed(4)}`);
+        }
+
+        // Перебираем возможные значения n (геометрический параметр)
+        for (let n = 1; n <= 5; n++) {
+            const denominator = Math.sqrt(Math.pow((2 * n + 1 - m * Math.sqrt(1 - b * b)), 2) + m * m * b * b);
+            const q = (b * (2 * n + 1)) / denominator;
+
+            const maxQ = Math.sqrt(1 - 0.2 * Math.pow((2.6 - 1 / m), 2));
+
+            log.steps.push(`  Проверка для n = ${n}: q = ${q.toFixed(4)}, maxQ = ${maxQ.toFixed(4)}`);
+
+            if (q <= maxQ) {
+                // Расчёт количества экспозиций
+                const angle1 = Math.asin(q * m) * 180 / Math.PI;
+                const angle2 = Math.asin(q * m / (2 * n + 1)) * 180 / Math.PI;
+                const N = 180 / (angle1 - angle2);
+
+                const roundedN = Math.ceil(N);
+
+                log.steps.push(`  ✓ Условие выполняется!`);
+                log.steps.push(`  N = 180° / (arcsin(qm) - arcsin(qm/(2n+1))) = ${N.toFixed(2)} → ${roundedN} экспозиций`);
+
+                optimalN = roundedN;
+                optimalF = currentF;
+                optimalQ = q;
+                optimalL = currentL;
+                foundSolution = true;
+
+                // Запоминаем, что использовали автоматический подбор
+                if (iteration > 0) {
+                    usedAutoAdjustment = true;
+                    log.steps.push(`  Автоматически подобрана длина снимка: ${optimalL.toFixed(1)} мм`);
+                }
+                break;
+            } else {
+                log.steps.push(`  ✗ Условие не выполняется: q > maxQ`);
+            }
+        }
+
+        if (foundSolution) {
+            break;
+        }
+
+        // Если решение не найдено - уменьшаем l на 10% для следующей итерации
+        const newL = currentL * 0.9;
+        if (newL < 50) { // Минимальная практическая длина снимка
+            log.steps.push(`  Достигнута минимальная длина снимка (50 мм). Решение не найдено.`);
+            break;
+        }
+        log.steps.push(`  Решение не найдено. Уменьшаем l с ${currentL.toFixed(1)} до ${newL.toFixed(1)} мм`);
+        currentL = newL;
+    }
+
+    if (!foundSolution) {
+        log.steps.push(`\nРешение не найдено после всех итераций.`);
+        return (
+            <div className="text-amber-700 bg-amber-100 p-4 rounded-lg">
+                <p className="font-bold">⚠️ Решение не найдено</p>
+                <p>Для заданных параметров не удалось найти решение, удовлетворяющее условиям ГОСТ.</p>
+                <p className="mt-2">Рекомендуется:</p>
+                <ul className="list-disc list-inside mt-1">
+                    <li>Уменьшить длину снимка l (попробуйте значение менее ${(currentL).toFixed(0)} мм)</li>
+                    <li>Увеличить расстояние f</li>
+                    <li>Использовать источник с меньшим фокусным пятном</li>
+                </ul>
+            </div>
+        );
+    }
+
+    const L = (Math.PI * D) / optimalN;
+
+    log.resultsData = {
+        'Коэффициент C': Math.max((2 * Φ) / K, 4),
+        'Длина снимка l': `${optimalL.toFixed(1)} мм`,
+        'Минимальное расстояние f': `${optimalF.toFixed(1)} мм`,
+        'Экспозиций N': optimalN,
+        'Длина участка L': `${L.toFixed(0)} мм`,
+        'Коэффициент q': optimalQ.toFixed(4),
+        'Коэффициент b': (optimalL / d).toFixed(4)
+    };
+
+    return (
+        <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <ResultItem label="Коэффициент C:" value={Math.max((2 * Φ) / K, 4).toFixed(2)} />
+                <ResultItem label="Длина снимка l:" value={`${optimalL.toFixed(1)} мм`} />
+                <ResultItem label="Расстояние f, не менее:" value={`${optimalF.toFixed(1)} мм`} />
+                <ResultItem label="Экспозиций N:" value={optimalN} />
+                <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
+                <ResultItem label="Коэффициент q:" value={optimalQ.toFixed(4)} />
+            </div>
+
+            <InfoAlert message="Расчёт для чертежа 3б выполнен по методике ГОСТ 7512-82 Приложение 4 п. 4" />
+
+            {usedAutoAdjustment && (
+                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-green-800 text-sm font-medium">✅ Автоматический подбор параметров</p>
+                    <p className="text-green-700 text-sm mt-1">
+                        Для выполнения условий ГОСТ длина снимка автоматически уменьшена с <strong>{l.toFixed(1)} мм</strong> до <strong>{optimalL.toFixed(1)} мм</strong>.
+                    </p>
+                </div>
+            )}
+        </>
+    );
+};
+
     // Основная функция расчёта
     const calculate = () => {
         const Φ = parseFloat(inputs.d_focus);
@@ -297,6 +478,7 @@ const ParametersCalculatorPage = () => {
         const K = parseFloat(inputs.z_sensitivity);
         const D = parseFloat(inputs.d_outer);
         const d = parseFloat(inputs.d_inner);
+        const l = parseFloat(inputs.film_length);
 
         // Валидация входных данных
         if (isNaN(Φ) || isNaN(K) || Φ <=0 || K<=0) {
@@ -318,6 +500,14 @@ const ParametersCalculatorPage = () => {
             }
             if (d >= D) {
                 setAlertMessage('Внутренний диаметр d не может быть больше или равен наружному диаметру D.');
+                return;
+            }
+        }
+
+        // Для схемы 5б проверяем длину снимка
+        if (inputs.scheme === '5b') {
+            if (isNaN(l) || l <= 0) {
+                setAlertMessage('Пожалуйста, введите длину снимка l.');
                 return;
             }
         }
@@ -366,8 +556,11 @@ const ParametersCalculatorPage = () => {
                 log.steps.push(`Расчёт m: m = d / D = ${d} / ${D} = ${m.toFixed(4)}`);
                 const C = getC(Φ, K);
                 log.steps.push(`Расчёт C: C = ${C.toFixed(4)}`);
-                const f = 0.7 * C * (1 - m) * D;
-                log.steps.push(`Расчёт f: f = 0.7 * C * (1 - m) * D = 0.7 * ${C.toFixed(4)} * (1 - ${m.toFixed(4)}) * ${D} = ${f.toFixed(3)} мм`);
+
+                // ИСПРАВЛЕННАЯ ФОРМУЛА: 0,7c(D-d)
+                const f = 0.7 * C * (D - d);
+                log.steps.push(`Расчёт f: f = 0,7 * C * (D - d) = 0,7 * ${C.toFixed(4)} * (${D} - ${d}) = ${f.toFixed(3)} мм`);
+
                 const fD = f / D;
                 log.steps.push(`Расчёт f/D: f/D = ${f.toFixed(3)} / ${D} = ${fD.toFixed(4)}`);
 
@@ -384,12 +577,12 @@ const ParametersCalculatorPage = () => {
                     }
                 }
                 const angle = 360 / N;
-                const L = (Math.PI * D) / N; // Исправлено: длина участка по окружности
+                const L = (Math.PI * D) / N;
                 log.resultsData = { f: `${f.toFixed(1)} мм`, N, 'Угол': `${angle.toFixed(0)}°`, L: `${L.toFixed(0)} мм` };
                 resultNode = (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <ResultItem label="Коэфф. C:" value={C.toFixed(2)} />
-                        <ResultItem label="Расстояние f:" value={`${f.toFixed(1)} мм`} />
+                        <ResultItem label="Расстояние от источника до поверхности сварного шва f: не менее" value={`${f.toFixed(1)} мм`} />
                         <ResultItem label="Экспозиций N:" value={N} />
                         <ResultItem label="Угол между экспозициями:" value={`${angle.toFixed(0)}°`} />
                         <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
@@ -397,41 +590,10 @@ const ParametersCalculatorPage = () => {
                 );
                 break;
             }
-            case '5b': {
-                // Схема 5б - трубы с другим размещением
-                const m = d / D;
-                log.steps.push(`m = d / D = ${d} / ${D} = ${m.toFixed(4)}`);
-                const C = getC(Φ, K);
-                log.steps.push(`C = ${C.toFixed(4)}`);
-                const f = 0.5 * C * D;
-                log.steps.push(`f = 0.5 * C * D = 0.5 * ${C.toFixed(4)} * ${D} = ${f.toFixed(3)} мм`);
-                const fD = f / D;
-                log.steps.push(`f/D = ${f.toFixed(3)} / ${D} = ${fD.toFixed(4)}`);
 
-                const closest_m_key = findClosestKey(TABLE_DATA_5b, m);
-                log.steps.push(`Поиск в таблице для m ≈ ${closest_m_key}`);
-                const tableRow = TABLE_DATA_5b[parseFloat(closest_m_key)];
-                let N = 10;
-                 for (const [exposures, min_fD] of Object.entries(tableRow).sort((a,b)=>parseInt(a[0])-parseInt(b[0]))) {
-                    if (min_fD !== null && fD >= min_fD) {
-                        N = parseInt(exposures);
-                        log.steps.push(`Условие f/D >= ${min_fD} выполнено. N = ${N}`);
-                        break;
-                    }
-                }
-                const L = (Math.PI * D) / N; // ИСПРАВЛЕНО: длина участка по окружности как в схеме 3г
-                log.resultsData = { f: `${f.toFixed(1)} мм`, N, L: `${L.toFixed(0)} мм` };
-                resultNode = (
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            <ResultItem label="Расстояние от источника до поверхности сварного шва f: не менее" value={`${f.toFixed(1)} мм`} />
-                            <ResultItem label="Экспозиций N:" value={N} />
-                            <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
-                        </div>
-                        {/* Предупреждение для схемы 3б */}
-                        <WarningAlert message="ГОСТ Р 50.05.07-18 Г.5 Для схемы на рисунке 3б при длине радиографической пленки менее внутреннего диаметра сварного соединения, а также для схем на рисунке 3ж, и расстояние и число участков (экспозиций) определяют опытным путем с учетом требований настоящего стандарта." />
-                    </>
-                );
+            case '5b': {
+                // Схема 5б - трубы с другим размещением (новая методика по ГОСТ 7512-82)
+                resultNode = calculateScheme5b(Φ, K, D, d, l, log);
                 break;
             }
             case '5v': {
@@ -675,6 +837,17 @@ const ParametersCalculatorPage = () => {
                         onChange={handleChange}
                         disabled={isDiameterInputsDisabled}
                         placeholder={isDiameterInputsDisabled ? "не используется" : "введите числовое значение"}
+                    />
+                    <InputField
+                        label="Длина снимка l, мм"
+                        name="film_length"
+                        type="number"
+                        step="1"
+                        min="1"
+                        value={inputs.film_length}
+                        onChange={handleChange}
+                        disabled={!isFilmLengthInputActive}
+                        placeholder={!isFilmLengthInputActive ? "не используется" : "введите длину снимка"}
                     />
                 </div>
                 {alertMessage && <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-md text-sm">{alertMessage}</div>}
