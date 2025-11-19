@@ -589,7 +589,7 @@ const calculateScheme5b = (Φ: number, K: number, D: number, d: number, l: numbe
                    <ResultItem label="Коэффициент C:" value={C.toFixed(2)} />
                    <ResultItem label="Минимальное расстояние f:" value={`${f_min_required.toFixed(1)} мм`} />
                    <ResultItem label="Коэффициент r:" value={r.toFixed(4)} />
-                   <ResultItem label="Экспозиций N:" value={optimalN} />
+                   <ResultItem label="Экспозиций N не менее:" value={optimalN} />
                    <ResultItem label="Угол между экспозициями:" value={`${angle.toFixed(1)}°`} />
                    <ResultItem label="Длина участка L:" value={`${L.toFixed(0)} мм`} />
                </div>
