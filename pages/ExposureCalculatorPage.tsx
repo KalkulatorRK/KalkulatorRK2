@@ -117,18 +117,6 @@ function interpolateLinear(data: number[], thickness: number): number {
 }
 
 /**
- * Интерполяция из номограмм для постоянных аппаратов
- */
-function interpolateFromNomogram(nomogramData: Record<string, number[]>, key: string | number, thickness: number): number {
-  const data = nomogramData[key.toString()];
-  if (!data) {
-    console.warn(`Нет данных номограммы для ключа: ${key}`);
-    return 1.0;
-  }
-  return interpolateLinear(data, thickness);
-}
-
-/**
  * Улучшенная интерполяция для импульсных аппаратов с обработкой граничных значений
  */
 function interpolateFromPulseNomogram(nomogramData: Record<string, number[]>, filmType: string, thickness: number): number {
@@ -321,6 +309,11 @@ const ExposureCalculatorPage = () => {
     filmType: 'D7'
   });
 
+  // Допустимые значения напряжения для МСТ-200 (из номограмм)
+  const mst200VoltageOptions = useMemo(() => {
+    return Object.keys(nomogramsSteelConstantMST200).map(v => parseInt(v)).sort((a, b) => a - b);
+  }, []);
+
   // Динамические опции для плёнок в зависимости от режима работы
   const xrayFilmOptions = useMemo(() => {
     if (xrayInputs.operationMode === 'pulse') {
@@ -467,8 +460,14 @@ const ExposureCalculatorPage = () => {
           baseFocus = 700; // Базовое расстояние для МСТ-200
 
           // Определение базового времени из номограмм для МСТ-200
-          baseExposure = interpolateFromNomogram(nomogramsSteelConstantMST200, voltage, thickness);
-          calculationLog += `1. Базовое время из номограммы МСТ-200 (F₀=${baseFocus} мм): t₀ = ${baseExposure.toFixed(3)} мА·мин\n`;
+          // Используем только допустимые значения напряжения из номограмм
+          const voltageKey = voltage.toString();
+          if (!nomogramsSteelConstantMST200[voltageKey]) {
+            throw new Error(`Для МСТ-200 напряжение должно быть одним из следующих значений: ${mst200VoltageOptions.join(', ')} кВ`);
+          }
+
+          baseExposure = interpolateLinear(nomogramsSteelConstantMST200[voltageKey], thickness);
+          calculationLog += `1. Базовое время из номограммы МСТ-200 (F₀=${baseFocus} мм, U=${voltage} кВ): t₀ = ${baseExposure.toFixed(3)} мА·мин\n`;
 
           // Корректировка для типа плёнки
           filmFactor = filmFactors['constant'][filmType] || 1.0;
@@ -646,15 +645,29 @@ const ExposureCalculatorPage = () => {
                 </SelectField>
               </div>
 
-              <InputField
-                label="Напряжение (кВ)"
-                type="number"
-                name="voltage"
-                value={xrayInputs.voltage}
-                onChange={handleXrayChange}
-                min="50"
-                step="1"
-              />
+              {xrayInputs.apparatusType === 'МСТ-200' ? (
+                <SelectField
+                  label="Напряжение (кВ)"
+                  name="voltage"
+                  value={xrayInputs.voltage}
+                  onChange={handleXrayChange}
+                >
+                  <option value="">Выберите напряжение</option>
+                  {mst200VoltageOptions.map(voltage => (
+                    <option key={voltage} value={voltage}>{voltage} кВ</option>
+                  ))}
+                </SelectField>
+              ) : (
+                <InputField
+                  label="Напряжение (кВ)"
+                  type="number"
+                  name="voltage"
+                  value={xrayInputs.voltage}
+                  onChange={handleXrayChange}
+                  min="50"
+                  step="1"
+                />
+              )}
 
               <InputField
                 label="Ток (мА)"
@@ -714,10 +727,10 @@ const ExposureCalculatorPage = () => {
               )}
 
               <div className="md:col-span-2">
-                <SelectField 
-                  label="Тип плёнки/детектора" 
-                  name="filmType" 
-                  value={xrayInputs.filmType} 
+                <SelectField
+                  label="Тип плёнки/детектора"
+                  name="filmType"
+                  value={xrayInputs.filmType}
                   onChange={handleXrayChange}
                 >
                   {xrayFilmOptions.map(f => (
@@ -728,10 +741,10 @@ const ExposureCalculatorPage = () => {
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-4 animate-fade-in">
-              <SelectField 
-                label="Тип источника" 
-                name="sourceType" 
-                value={isotopeInputs.sourceType} 
+              <SelectField
+                label="Тип источника"
+                name="sourceType"
+                value={isotopeInputs.sourceType}
                 onChange={handleIsotopeChange}
               >
                 {Object.keys(halfLifeData).map(s => (
@@ -747,25 +760,25 @@ const ExposureCalculatorPage = () => {
                   {halfLifeData[isotopeInputs.sourceType]} дней
                 </div>
               </div>
-              
+
               <div className="md:col-span-2 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-lg">
                 <div className="flex gap-4 mb-3">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="activityMethod" 
-                      value="current" 
-                      checked={isotopeInputs.activityMethod === 'current'} 
+                    <input
+                      type="radio"
+                      name="activityMethod"
+                      value="current"
+                      checked={isotopeInputs.activityMethod === 'current'}
                       onChange={handleIsotopeChange}
                     />
                     Текущая активность
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input 
-                      type="radio" 
-                      name="activityMethod" 
-                      value="passport" 
-                      checked={isotopeInputs.activityMethod === 'passport'} 
+                    <input
+                      type="radio"
+                      name="activityMethod"
+                      value="passport"
+                      checked={isotopeInputs.activityMethod === 'passport'}
                       onChange={handleIsotopeChange}
                     />
                     Паспортные данные
@@ -773,31 +786,31 @@ const ExposureCalculatorPage = () => {
                 </div>
 
                 {isotopeInputs.activityMethod === 'current' ? (
-                  <InputField 
+                  <InputField
                     label="Текущая активность (Кюри)"
-                    type="number" 
-                    name="currentActivity" 
-                    value={isotopeInputs.currentActivity} 
-                    onChange={handleIsotopeChange} 
+                    type="number"
+                    name="currentActivity"
+                    value={isotopeInputs.currentActivity}
+                    onChange={handleIsotopeChange}
                     min="0.1"
                     step="0.1"
                   />
                 ) : (
                   <div className="grid md:grid-cols-2 gap-3">
-                    <InputField 
+                    <InputField
                       label="Паспортная активность (Кюри)"
-                      type="number" 
-                      name="passportActivity" 
-                      value={isotopeInputs.passportActivity} 
-                      onChange={handleIsotopeChange} 
+                      type="number"
+                      name="passportActivity"
+                      value={isotopeInputs.passportActivity}
+                      onChange={handleIsotopeChange}
                       min="0.1"
                       step="0.1"
                     />
-                    <InputField 
-                      label="Дата по паспорту" 
-                      type="date" 
-                      name="passportDate" 
-                      value={isotopeInputs.passportDate} 
+                    <InputField
+                      label="Дата по паспорту"
+                      type="date"
+                      name="passportDate"
+                      value={isotopeInputs.passportDate}
                       onChange={handleIsotopeChange}
                       max={new Date().toISOString().split('T')[0]} // Добавляем максимальную дату - сегодня
                     />
@@ -805,30 +818,30 @@ const ExposureCalculatorPage = () => {
                 )}
               </div>
 
-              <InputField 
-                label="Радиационная толщина (мм)" 
-                type="number" 
-                name="radThickness" 
-                value={isotopeInputs.radThickness} 
-                onChange={handleIsotopeChange} 
+              <InputField
+                label="Радиационная толщина (мм)"
+                type="number"
+                name="radThickness"
+                value={isotopeInputs.radThickness}
+                onChange={handleIsotopeChange}
                 min="1"
                 step="0.1"
               />
 
-              <InputField 
+              <InputField
                 label="Фокусное расстояние F (мм) - расстояние от источника до детектора/плёнки"
-                type="number" 
-                name="focusDistance" 
-                value={isotopeInputs.focusDistance} 
-                onChange={handleIsotopeChange} 
+                type="number"
+                name="focusDistance"
+                value={isotopeInputs.focusDistance}
+                onChange={handleIsotopeChange}
                 min="100"
                 step="1"
               />
 
-              <SelectField 
-                label="Материал объекта" 
-                name="material" 
-                value={isotopeInputs.material} 
+              <SelectField
+                label="Материал объекта"
+                name="material"
+                value={isotopeInputs.material}
                 onChange={handleIsotopeChange}
               >
                 <option value="steel">Сталь</option>
@@ -836,10 +849,10 @@ const ExposureCalculatorPage = () => {
                 <option value="titanium">Титан</option>
               </SelectField>
 
-              <SelectField 
-                label="Тип плёнки/детектора" 
-                name="filmType" 
-                value={isotopeInputs.filmType} 
+              <SelectField
+                label="Тип плёнки/детектора"
+                name="filmType"
+                value={isotopeInputs.filmType}
                 onChange={handleIsotopeChange}
               >
                 {Object.keys(filmFactors[isotopeInputs.sourceType] || {}).map(f => (
@@ -850,15 +863,15 @@ const ExposureCalculatorPage = () => {
           )}
 
           <div className="flex gap-3 pt-6 mt-6 border-t border-slate-200 dark:border-slate-700">
-            <button 
-              onClick={calculate} 
+            <button
+              onClick={calculate}
               className="flex-1 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
             >
               <Calculator size={20}/>
               Рассчитать время экспозиции
             </button>
-            <button 
-              onClick={reset} 
+            <button
+              onClick={reset}
               className="flex-1 bg-slate-500 text-white font-bold py-3 px-6 rounded-lg hover:bg-slate-600 transition flex items-center justify-center gap-2"
             >
               <RotateCcw size={20}/>
@@ -873,7 +886,7 @@ const ExposureCalculatorPage = () => {
           <h2 className="text-2xl font-bold mb-6 text-center text-slate-900 dark:text-white">
             Результаты расчёта
           </h2>
-          
+
           <div className="bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-blue-900/30 border-2 border-dashed border-blue-300 dark:border-blue-700 rounded-xl p-8 text-center shadow-lg">
             <p className="text-lg text-slate-600 dark:text-slate-300 mb-2">
               Расчётное время экспозиции:
